@@ -1,0 +1,521 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Intelligence Creation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --accent-purple: #a855f7;
+            --accent-cyan:   #06b6d4;
+            --white:         #ffffff;
+            --text-muted:    #94a3b8;
+            --gradient:      linear-gradient(135deg, #a855f7, #ec4899);
+        }
+
+        /* ======= BODY ======= */
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background: #090810;
+            transition: background 1.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.lamp-on {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+        }
+
+        /* ======= SCENE LAYOUT ======= */
+        .scene {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 56px;
+            width: 100%;
+            max-width: 1020px;
+            padding: 40px 24px;
+        }
+
+        /* ======= LAMP SIDE ======= */
+        .lamp-side {
+            position: relative;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Floor glow */
+        .floor-glow {
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 230px;
+            height: 28px;
+            background: radial-gradient(ellipse, rgba(255,200,80,0) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: background 1s ease;
+        }
+
+        body.lamp-on .floor-glow {
+            background: radial-gradient(ellipse, rgba(255,200,80,0.38) 0%, transparent 70%);
+        }
+
+        /* SVG wrap */
+        .lamp-svg-wrap {
+            width: 230px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .lamp-svg-wrap svg {
+            width: 100%;
+            height: auto;
+            overflow: visible;
+        }
+
+        /* ---- SVG element transitions ---- */
+
+        /* Ambient halo (blurred ellipse behind dome) */
+        .halo {
+            fill: rgba(255, 185, 50, 0);
+            transition: fill 0.9s ease;
+        }
+        body.lamp-on .halo {
+            fill: rgba(255, 185, 50, 0.55);
+        }
+
+        /* Inner dome light (clipped to dome shape) */
+        .dome-inner-light {
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        body.lamp-on .dome-inner-light {
+            opacity: 1;
+        }
+
+        /* Dome shell */
+        .dome-shell {
+            fill: #b0a8a0;
+            transition: fill 0.8s ease;
+        }
+        body.lamp-on .dome-shell {
+            /* slightly translucent warm white so inner light bleeds through */
+            fill: rgba(255, 252, 240, 0.82);
+        }
+
+        /* Dome rim (flat bottom edge of dome) */
+        .dome-rim {
+            fill: #908880;
+            transition: fill 0.8s ease;
+        }
+        body.lamp-on .dome-rim {
+            fill: #c8c0b8;
+        }
+
+        /* Pole & base */
+        .lamp-pole { fill: #b0a8a0; transition: fill 0.7s ease; }
+        .lamp-base { fill: #b0a8a0; transition: fill 0.7s ease; }
+        body.lamp-on .lamp-pole { fill: #d8d0c8; }
+        body.lamp-on .lamp-base { fill: #d8d0c8; }
+
+        /* Cord */
+        .cord-line-el {
+            stroke: #777;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            transition: stroke 0.5s ease;
+        }
+        body.lamp-on .cord-line-el { stroke: #bbb; }
+
+        .cord-ball-el {
+            fill: #c8783c;
+            transition: fill 0.5s ease;
+        }
+        body.lamp-on .cord-ball-el { fill: #e09050; }
+
+        /* Drag handle cursor */
+        .cord-group { cursor: grab; }
+        .cord-group:active { cursor: grabbing; }
+
+        /* Hint */
+        .cord-hint-text {
+            position: absolute;
+            /* bottom of cord ball area in SVG is around y=330/400 → ~82% height */
+            bottom: 22%;
+            right: 0px;
+            font-size: 0.58rem;
+            color: rgba(255,255,255,0.28);
+            white-space: nowrap;
+            pointer-events: none;
+            font-family: 'Poppins', sans-serif;
+            writing-mode: vertical-rl;
+            letter-spacing: 1.2px;
+            transition: opacity 0.5s;
+        }
+        body.lamp-on .cord-hint-text { opacity: 0; }
+
+        /* ======= AUTH CONTAINER ======= */
+        .auth-container {
+            background: rgba(255,255,255,0.05);
+            padding: 48px 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            opacity: 0;
+            transform: translateX(36px) scale(0.96);
+            pointer-events: none;
+            transition:
+                opacity  0.9s cubic-bezier(0.16,1,0.3,1) 0.18s,
+                transform 0.9s cubic-bezier(0.16,1,0.3,1) 0.18s;
+        }
+
+        body.lamp-on .auth-container {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            pointer-events: all;
+        }
+
+        .auth-logo { margin-bottom: 28px; }
+        .auth-logo img { width: 58px; height: 58px; border-radius: 50%; object-fit: cover; }
+        .auth-logo h1 {
+            font-size: 1.65rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-top: 12px;
+        }
+        .auth-logo p { color: var(--text-muted); font-size: 0.9rem; }
+
+        .form-group { margin-bottom: 18px; text-align: left; }
+        .form-group label { display: block; color: var(--white); margin-bottom: 7px; font-weight: 500; }
+        .form-group input {
+            width: 100%; padding: 13px 18px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            font-family: inherit; font-size: 0.95rem;
+            background: rgba(255,255,255,0.05);
+            color: var(--white);
+            transition: border-color 0.3s;
+        }
+        .form-group input::placeholder { color: var(--text-muted); }
+        .form-group input:focus { outline: none; border-color: var(--accent-purple); }
+
+        .btn-auth {
+            width: 100%; padding: 14px; border-radius: 10px;
+            font-size: 1rem; margin-top: 8px; cursor: pointer; border: none;
+            font-family: 'Poppins', sans-serif; font-weight: 600;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white; transition: opacity 0.2s, transform 0.2s;
+        }
+        .btn-auth:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        .auth-error {
+            background: rgba(239,68,68,0.2); border: 1px solid #ef4444;
+            color: #ef4444; padding: 12px; border-radius: 8px;
+            margin-bottom: 18px; font-size: 0.9rem; display: none;
+        }
+        .auth-error.show { display: block; }
+
+        .auth-footer { margin-top: 22px; color: var(--text-muted); }
+        .auth-footer a { color: var(--accent-cyan); text-decoration: none; font-weight: 600; }
+        .auth-footer a:hover { text-decoration: underline; }
+
+        /* ======= CORD BOUNCE ======= */
+        @keyframes cordBounce {
+            0%   { transform: translateY(0); }
+            22%  { transform: translateY(26px); }
+            48%  { transform: translateY(-7px); }
+            68%  { transform: translateY(4px); }
+            84%  { transform: translateY(-2px); }
+            100% { transform: translateY(0); }
+        }
+        .cord-group.anim-pull { animation: cordBounce 0.55s ease forwards; }
+
+        /* ======= FLICKER ======= */
+        @keyframes flickerOn {
+            0%   { opacity: 0; }
+            18%  { opacity: 0.95; }
+            32%  { opacity: 0.2; }
+            50%  { opacity: 1; }
+            66%  { opacity: 0.6; }
+            82%  { opacity: 1; }
+            100% { opacity: 1; }
+        }
+        .dome-inner-light.flicker { animation: flickerOn 0.65s ease forwards; }
+
+        /* ======= RESPONSIVE ======= */
+        @media (max-width: 720px) {
+            .scene { flex-direction: column; gap: 16px; overflow-y: auto; }
+            body { overflow-y: auto; }
+            .lamp-svg-wrap { width: 170px; }
+            .auth-container {
+                transform: translateY(28px) scale(0.96);
+                padding: 30px 20px;
+            }
+            body.lamp-on .auth-container { transform: translateY(0) scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="scene">
+
+    <!-- ========== LAMP ========== -->
+    <div class="lamp-side">
+        <div class="lamp-svg-wrap">
+            <!--
+                viewBox 0 0 240 420
+                Dome top: y≈50  bottom: y≈165
+                Pole:     x=112-128, y=165-355
+                Base:     y=355-377
+                Cord:     from x=128,y=220 → x=155,y=308  ball cy=320
+            -->
+            <svg viewBox="0 0 240 420" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!-- Blur for ambient halo -->
+                    <filter id="haloBlur" x="-80%" y="-80%" width="260%" height="260%">
+                        <feGaussianBlur stdDeviation="22"/>
+                    </filter>
+
+                    <!-- ClipPath: exact dome shape so inner light stays inside -->
+                    <clipPath id="domeClip">
+                        <path d="M 26,164 Q 22,52 120,46 Q 218,52 214,164 Z"/>
+                    </clipPath>
+
+                    <!-- Inner light radial gradient (warm white center → transparent edges) -->
+                    <radialGradient id="innerLightGrad" cx="50%" cy="88%" r="72%">
+                        <stop offset="0%"   stop-color="#ffffff"  stop-opacity="1"/>
+                        <stop offset="40%"  stop-color="#fffbe0"  stop-opacity="0.95"/>
+                        <stop offset="80%"  stop-color="#ffe08a"  stop-opacity="0.55"/>
+                        <stop offset="100%" stop-color="#ffbb33"  stop-opacity="0"/>
+                    </radialGradient>
+
+                    <!-- Dome shell gradient (off: gray, on: warm white) -->
+                    <radialGradient id="domeOffGrad" cx="50%" cy="60%" r="60%">
+                        <stop offset="0%"   stop-color="#c8c0b8"/>
+                        <stop offset="100%" stop-color="#908880"/>
+                    </radialGradient>
+                </defs>
+
+                <!-- 1. AMBIENT HALO: blurred ellipse BEHIND dome for outer warm glow -->
+                <ellipse class="halo"
+                    cx="120" cy="130" rx="90" ry="78"
+                    filter="url(#haloBlur)"/>
+
+                <!-- 2. INNER LIGHT: clipped exactly to dome boundary -->
+                <path class="dome-inner-light" id="domeLight"
+                    d="M 26,164 Q 22,52 120,46 Q 218,52 214,164 Z"
+                    fill="url(#innerLightGrad)"
+                    clip-path="url(#domeClip)"/>
+
+                <!-- 3. DOME SHELL: semi-opaque when on so inner light bleeds through -->
+                <path class="dome-shell"
+                    d="M 26,164 Q 22,52 120,46 Q 218,52 214,164 Z"/>
+
+                <!-- 4. DOME RIM: flat bottom ellipse -->
+                <ellipse class="dome-rim"
+                    cx="120" cy="164" rx="94" ry="13"/>
+
+                <!-- 5. POLE -->
+                <rect class="lamp-pole"
+                    x="111" y="163" width="18" height="192" rx="8"/>
+
+                <!-- 6. BASE: connector + foot -->
+                <rect class="lamp-base"
+                    x="102" y="343" width="36" height="16" rx="7"/>
+                <rect class="lamp-base"
+                    x="50"  y="355" width="140" height="22" rx="11"/>
+
+                <!-- 7. PULL CORD: hangs from RIGHT SIDE of pole (straight vertical) -->
+                <g class="cord-group" id="pullCordGroup">
+                    <!-- Tali (line) -->
+                    <line class="cord-line-el" id="cordLineSvg"
+                        x1="155" y1="165"
+                        x2="155" y2="280"/>
+                    <!-- Bola di ujung -->
+                    <circle class="cord-ball-el" id="cordBallSvg"
+                        cx="155" cy="292" r="12"/>
+                    <!-- Invisible hit area (bigger) -->
+                    <rect x="135" y="165" width="40" height="150"
+                          fill="transparent" style="cursor:grab"/>
+                </g>
+
+                <!-- Highlight kilap di kap (visible always, subtle) -->
+                <path d="M 68,125 Q 95,88 138,78"
+                    stroke="rgba(255,255,255,0.18)" stroke-width="3"
+                    fill="none" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <!-- Floor glow shadow -->
+        <div class="floor-glow"></div>
+
+        <!-- Hint text -->
+        <div class="cord-hint-text">↓ tarik tali</div>
+    </div>
+
+    <!-- ========== AUTH FORM ========== -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-logo">
+            <img src="{% static 'sequence/ezgif-frame-001.jpg' %}" alt="Logo">
+            <h1>Intelligence Creation</h1>
+            <p>Masuk ke akun Anda</p>
+        </div>
+
+        <div id="error-message" class="auth-error"></div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Masukkan email Anda" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Masukkan password Anda" required>
+            </div>
+            <button type="submit" class="btn-auth">
+                <i class="fas fa-sign-in-alt"></i> Masuk
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Belum punya akun? <a href="/register.html">Daftar di sini</a></p>
+            <p style="margin-top: 14px;"><a href="/">← Kembali ke Beranda</a></p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+/* ============================================================
+   LAMP TOGGLE – drag tali ke bawah ≥ 35px → ON/OFF
+============================================================ */
+let isLampOn   = false;
+let isDragging = false;
+let startY     = 0;
+let pulled     = false;
+
+const PULL_THRESHOLD = 35;
+
+const body        = document.body;
+const pullGroup   = document.getElementById('pullCordGroup');
+const cordLine    = document.getElementById('cordLineSvg');
+const cordBall    = document.getElementById('cordBallSvg');
+const domeLight   = document.getElementById('domeLight');
+
+// Base SVG positions for cord
+const Y2_BASE  = 280;
+const CY_BASE  = 292;
+
+pullGroup.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    pulled     = false;
+    startY     = e.clientY;
+    pullGroup.setPointerCapture(e.pointerId);
+    e.preventDefault();
+});
+
+pullGroup.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const dy = e.clientY - startY;
+    if (dy > 0) {
+        const extra = Math.min(dy * 0.55, 65);
+        cordLine.setAttribute('y2', Y2_BASE + extra);
+        cordBall.setAttribute('cy', CY_BASE + extra);
+        if (dy >= PULL_THRESHOLD) pulled = true;
+    }
+});
+
+pullGroup.addEventListener('pointerup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    // Snap back
+    cordLine.setAttribute('y2', Y2_BASE);
+    cordBall.setAttribute('cy', CY_BASE);
+    if (pulled) toggleLamp();
+});
+
+pullGroup.addEventListener('pointercancel', () => {
+    isDragging = false;
+    cordLine.setAttribute('y2', Y2_BASE);
+    cordBall.setAttribute('cy', CY_BASE);
+});
+
+function toggleLamp() {
+    pullGroup.classList.add('anim-pull');
+    setTimeout(() => pullGroup.classList.remove('anim-pull'), 600);
+
+    isLampOn = !isLampOn;
+
+    if (isLampOn) {
+        body.classList.add('lamp-on');
+        // Flicker the inner light
+        domeLight.classList.remove('flicker');
+        void domeLight.offsetWidth; // reflow to restart animation
+        domeLight.classList.add('flicker');
+    } else {
+        body.classList.remove('lamp-on');
+        domeLight.classList.remove('flicker');
+    }
+}
+
+/* ============================================================
+   LOGIN FORM
+============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('registeredEmail');
+    if (saved) {
+        document.getElementById('email').value = saved;
+        localStorage.removeItem('registeredEmail');
+    }
+});
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email    = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorEl  = document.getElementById('error-message');
+
+    try {
+        const res  = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            errorEl.textContent = data.error;
+            errorEl.classList.add('show');
+            return;
+        }
+
+        window.location.href = '/dashboard.html';
+    } catch (err) {
+        errorEl.textContent = 'Terjadi kesalahan jaringan';
+        errorEl.classList.add('show');
+    }
+});
+</script>
+
+<script src="{% static 'script.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+{"numeric": ["umur", "pendapatan", "jam_kerja"], "categorical": [], "dropped_missing": [], "dropped_high_cardinality": []}

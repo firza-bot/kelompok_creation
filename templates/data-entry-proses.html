@@ -1,0 +1,1152 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proses Pipeline - Intelligence Creation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --purple: #7c3aed;
+            --pink: #ec4899;
+            --cyan: #06b6d4;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --indigo: #6366f1;
+            --teal: #14b8a6;
+            --bg: #080812;
+            --bg-card: #111127;
+            --bg-card-2: #0d0d20;
+            --border: rgba(255, 255, 255, 0.07);
+            --border-bright: rgba(255, 255, 255, 0.15);
+            --muted: #6b7280;
+            --white: #f8fafc;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--white);
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        input, select, textarea, button {
+            font-family: inherit;
+        }
+
+        /* LAYOUT */
+        .g2-pipeline-page {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            background: var(--bg);
+        }
+
+        /* Sidebar (Left) */
+        .g2-sidebar {
+            width: 320px;
+            background: rgba(0, 0, 0, 0.2);
+            border-right: 1px solid var(--border);
+            padding: 28px 24px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .g2-sidebar-header {
+            margin-bottom: 32px;
+        }
+
+        .brand-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
+        }
+
+        .g2-sidebar-header h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 6px;
+            margin-top: 15px;
+            color: var(--white);
+        }
+
+        .g2-sidebar-header p {
+            font-size: 0.82rem;
+            color: var(--muted);
+            word-break: break-all;
+        }
+
+        .g2-step-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .g2-step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.01);
+            color: var(--muted);
+        }
+
+        .g2-step-item.locked {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .g2-step-item.completed {
+            color: var(--white);
+            border-color: rgba(16, 185, 129, 0.15);
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .g2-step-item.completed .g2-step-num {
+            background: var(--green);
+            color: black;
+            border-color: transparent;
+        }
+
+        .g2-step-item.active {
+            background: rgba(6, 182, 212, 0.08);
+            border-color: var(--cyan);
+            color: var(--white);
+        }
+
+        .g2-step-item.active .g2-step-num {
+            background: var(--cyan);
+            color: black;
+            border-color: transparent;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+        }
+
+        .g2-step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .g2-step-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        /* Main Content (Right) */
+        .g2-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            height: 100%;
+        }
+
+        .g2-main-header {
+            padding: 24px 40px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 20px;
+            background: rgba(8, 8, 18, 0.4);
+        }
+
+        .g2-main-header h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.35rem;
+            color: var(--cyan);
+            margin: 0;
+        }
+
+        .g2-main-body {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .g2-form-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .g2-main-footer {
+            padding: 24px 40px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(8, 8, 18, 0.4);
+        }
+
+        /* STYLING FORM & PREMIUM INPUTS */
+        .stage-info-box {
+            background: rgba(6, 182, 212, 0.04);
+            border: 1px solid rgba(6, 182, 212, 0.12);
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        .stage-info-box b {
+            color: var(--cyan);
+        }
+
+        .form-group-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            margin-bottom: 18px;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .form-row {
+            margin-bottom: 20px;
+        }
+
+        .form-row label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* PREMIUM INPUT OVERRIDES */
+        .search-input {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            color: #f8fafc !important;
+            padding: 14px 18px !important;
+            font-size: 0.9rem !important;
+            transition: all 0.25s ease !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .search-input:focus {
+            border-color: var(--cyan) !important;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.25) !important;
+            outline: none !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .search-input:disabled {
+            opacity: 0.55 !important;
+            cursor: not-allowed !important;
+            background: rgba(255, 255, 255, 0.01) !important;
+            border-color: rgba(255, 255, 255, 0.04) !important;
+        }
+
+        select.search-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 18px center !important;
+            background-size: 16px !important;
+            padding-right: 45px !important;
+            cursor: pointer;
+        }
+
+        select.search-input option {
+            background: #111127 !important;
+            color: #f8fafc !important;
+        }
+
+        textarea.search-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* BUTTONS */
+        .pg-btn-primary {
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            color: var(--white);
+            border: none;
+            padding: 12px 28px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pg-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+        }
+
+        .pg-btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .pg-btn-secondary {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--white);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pg-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-restart-red {
+            border-color: rgba(239, 68, 68, 0.2) !important;
+            color: #f87171 !important;
+            background: rgba(239, 68, 68, 0.02) !important;
+        }
+
+        .btn-restart-red:hover {
+            background: rgba(239, 68, 68, 0.08) !important;
+            border-color: rgba(239, 68, 68, 0.4) !important;
+        }
+
+        /* PROBLEM CARDS STYLING */
+        .problem-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .problem-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .problem-card.active {
+            background: rgba(6, 182, 212, 0.08) !important;
+            border-color: var(--cyan) !important;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.25) !important;
+        }
+
+        .problem-card-icon {
+            font-size: 2.2rem;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+        }
+
+        .problem-card-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .problem-card-desc {
+            font-size: 0.75rem;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .problem-card.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* TOAST NOTIFICATION */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            animation: toastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--white);
+        }
+
+        .toast-success {
+            border-left: 3px solid var(--green);
+        }
+
+        .toast-success::before {
+            content: '✓';
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .toast-error {
+            border-left: 3px solid var(--red);
+        }
+
+        .toast-error::before {
+            content: '✕';
+            color: var(--red);
+            font-weight: 700;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        /* LOADING DOTS */
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--purple);
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="g2-pipeline-page">
+        <!-- Sidebar -->
+        <div class="g2-sidebar">
+            <div class="g2-sidebar-header">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                    <div class="brand-dot"></div>
+                    <span style="font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em; color: var(--white);">INTELLIGENCE CREATION</span>
+                </div>
+                <h3>Pipeline Stages</h3>
+                <p id="g2-modal-subtitle">Dataset: -</p>
+            </div>
+            <div class="g2-step-list" id="g2-step-list-ui">
+                <!-- Dynamically populated steps -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="g2-main">
+            <div class="g2-main-header">
+                <button onclick="goBack()" class="pg-btn-secondary">
+                    <span>←</span> Kembali ke Dashboard
+                </button>
+                <h2 id="g2-active-stage-title">Stage Title</h2>
+            </div>
+            <div class="g2-main-body">
+                <div class="g2-form-container">
+                    <div style="margin-bottom: 24px; color: var(--muted); font-size: 0.95rem;" id="g2-active-stage-desc">
+                        Deskripsi tahap ini.
+                    </div>
+                    <!-- Dynamic Content Container -->
+                    <div id="g2-stage-dynamic-content" style="min-height: 250px; display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Dynamically populated forms -->
+                    </div>
+                </div>
+            </div>
+            <div class="g2-main-footer">
+                <button class="pg-btn-secondary btn-restart-red" id="g2-btn-restart" onclick="restartGrid2Pipeline()">
+                    ↻ Ulangi dari Awal (Tahap 1)
+                </button>
+                <button class="pg-btn-primary" id="g2-btn-save-next" style="margin-left: auto;">
+                    Simpan & Lanjut →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        const submissionId = {{ submission_id }};
+        let activeSubmissionId = submissionId;
+        let currentG2StageIndex = 0;
+
+        let pipelineState = {
+            grid2Queue: [],
+            grid2Stages: [
+                { name: 'Problem Framing & IPO', status: 'wait' },
+                { name: 'Pendefinisian Model Dataset', status: 'wait' },
+                { name: 'Pemrosesan Data', status: 'wait' },
+                { name: 'Perencanaan Model & Refining', status: 'wait' },
+                { name: 'Pelatihan & Testing Model', status: 'wait' },
+                { name: 'Refining Model', status: 'wait' },
+                { name: 'Materi Komunikasi Teknikal', status: 'wait' },
+                { name: 'Materi Komunikasi Manajemen', status: 'wait' }
+            ],
+            grid3Data: []
+        };
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPipelineData();
+        });
+
+        function goBack() {
+            window.location.href = '/dashboard';
+        }
+
+        function selectProblemType(type) {
+            const input = document.getElementById('stage0-task-type');
+            if (!input || input.disabled) return;
+            input.value = type;
+
+            document.querySelectorAll('.problem-card').forEach(card => card.classList.remove('active'));
+            const activeCard = document.getElementById(`problem-card-${type}`);
+            if (activeCard) activeCard.classList.add('active');
+
+            const targetRow = document.getElementById('target-column-row');
+            const targetInput = document.getElementById('stage0-suggested-target');
+            if (type === 'clustering') {
+                if (targetRow) targetRow.style.display = 'none';
+                if (targetInput) targetInput.value = 'N/A (Clustering)';
+            } else {
+                if (targetRow) targetRow.style.display = 'block';
+                if (targetInput && targetInput.value === 'N/A (Clustering)') {
+                    targetInput.value = '';
+                }
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const t = document.createElement('div');
+            t.className = 'toast toast-' + type;
+            t.textContent = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3500);
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function loadPipelineData() {
+            try {
+                const res = await fetch(`/api/v2/submissions/${submissionId}/`);
+                if (!res.ok) throw new Error('Gagal memuat detail submission');
+                const sub = await res.json();
+
+                const subtitle = document.getElementById('g2-modal-subtitle');
+                subtitle.textContent = "Dataset: " + (sub.file_name || sub.title || '-');
+
+                if (sub.status === 'in_progress') {
+                    pipelineState.grid2Queue = [sub];
+                    pipelineState.grid3Data = [];
+                } else if (sub.status === 'completed') {
+                    pipelineState.grid2Queue = [];
+                    pipelineState.grid3Data = [sub];
+                } else {
+                    pipelineState.grid2Queue = [sub];
+                    pipelineState.grid3Data = [];
+                }
+
+                const currentStage = sub.current_stage;
+                const pipelineData = sub.pipeline_data || {};
+
+                pipelineState.grid2Stages = [
+                    { name: 'Problem Framing & IPO', status: currentStage > 0 ? 'done' : 'active', data: pipelineData.stage_0 },
+                    { name: 'Pendefinisian Model Dataset', status: currentStage > 1 ? 'done' : (currentStage === 1 ? 'active' : 'wait'), data: pipelineData.stage_1 },
+                    { name: 'Pemrosesan Data', status: currentStage > 2 ? 'done' : (currentStage === 2 ? 'active' : 'wait'), data: pipelineData.stage_2 },
+                    { name: 'Perencanaan Model & Refining', status: currentStage > 3 ? 'done' : (currentStage === 3 ? 'active' : 'wait'), data: pipelineData.stage_3 },
+                    { name: 'Pelatihan & Testing Model', status: currentStage > 4 ? 'done' : (currentStage === 4 ? 'active' : 'wait'), data: pipelineData.stage_4 },
+                    { name: 'Refining Model', status: currentStage > 5 ? 'done' : (currentStage === 5 ? 'active' : 'wait'), data: pipelineData.stage_5 },
+                    { name: 'Materi Komunikasi Teknikal', status: currentStage > 6 ? 'done' : (currentStage === 6 ? 'active' : 'wait'), data: pipelineData.stage_6 },
+                    { name: 'Materi Komunikasi Manajemen', status: currentStage > 7 ? 'done' : (currentStage === 7 ? 'active' : 'wait'), data: pipelineData.stage_7 }
+                ];
+
+                let activeIdx = currentStage;
+                if (sub.status === 'completed') activeIdx = 7;
+                if (activeIdx > 7) activeIdx = 7;
+
+                selectGrid2Stage(activeIdx);
+
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        function selectGrid2Stage(index) {
+            const stage = pipelineState.grid2Stages[index];
+            if (stage && stage.status === 'wait') return; // Locked
+
+            currentG2StageIndex = index;
+            renderGrid2Sidebar();
+
+            document.getElementById('g2-active-stage-title').textContent = `${index + 1}. ${stage.name}`;
+            const descs = [
+                'Menentukan masalah, struktur data, tipe tugas prediksi (Klasifikasi/Regresi), serta pemetaan Input, Proses, dan Output (IPO).',
+                'Mencatat deskripsi statistik, persentase nilai kosong, korelasi antar fitur, serta menentukan kolom target prediksi.',
+                'Aktivitas pembersihan data, pengisian nilai kosong, pengkodean kategori, standardisasi skala numerik, dan pembagian porsi latih/uji (80/20).',
+                'Rekomendasi algoritma Scikit-learn (tabular) atau PyTorch Deep Learning (gambar/teks) terbaik berdasarkan akurasi benchmark.',
+                'Melatih arsitektur model terpilih menggunakan porsi data latih dan mengevaluasi performa akhir pada data uji.',
+                'Mengoptimasi parameter model (tuning) via RandomizedSearchCV atau penambahan epoch pelatihan agar model lebih presisi.',
+                'Menyusun laporan teknis yang lengkap untuk dokumentasi engineer mengenai pipeline pemrosesan dan kinerja model.',
+                'Mengubah informasi teknis rumit menjadi ringkasan bisnis sederhana bernarasi Bahasa Indonesia untuk pemangku kebijakan.'
+            ];
+            document.getElementById('g2-active-stage-desc').textContent = descs[index] || '';
+
+            renderGrid2StageContent(index);
+        }
+
+        function renderGrid2Sidebar() {
+            const listUi = document.getElementById('g2-step-list-ui');
+            listUi.innerHTML = pipelineState.grid2Stages.map((s, i) => {
+                let cls = 'locked';
+                if (s.status === 'done') cls = 'completed';
+                else if (s.status === 'active') cls = 'active';
+
+                if (i === currentG2StageIndex) cls += ' active';
+
+                return `
+                <div class="g2-step-item ${cls}" onclick="selectGrid2Stage(${i})">
+                    <div class="g2-step-num">${s.status === 'done' ? '✓' : (i + 1)}</div>
+                    <div class="g2-step-name">${s.name}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function getStageDefaults(modality, stage) {
+            const csvDefaults = [
+                { task_type: 'classification', suggested_target: 'target_status', ipo_input: 'Data Tabular (CSV). Dimensi: 5000 baris, 12 kolom.', ipo_process: 'Pembersihan data (missing value, scaling), Train-test split (80/20).', ipo_output: 'Prediksi label kelas target secara presisi.' },
+                { quality_score: 95, target_column: 'target_status', columns_info: 'id int, umur int, pendapatan float, status string, target_status int' },
+                { rows_before: 5000, rows_after: 4850, cols_num: 3, cols_cat: 2, cols_dropped: 1, cols_card: 0, train_size: 3880, test_size: 970 },
+                { selected_model: 'Random Forest Classifier' },
+                { accuracy: 94.5, precision: 93.8, recall: 94.2, f1: 94.0 },
+                { refined_acc: 95.8, best_params: '{"n_estimators": 200, "max_depth": 15}' },
+                { tech_summary: 'Model Random Forest Classifier berhasil dilatih pada data tabular dengan akurasi 95.8%.' },
+                { mgmt_summary: 'Sistem berhasil menganalisis data penjualan dan siap memprediksi dengan akurasi 95.8%.', rec_1: 'Terapkan model untuk memfilter prospek pelanggan.', rec_2: 'Lakukan evaluasi berkala setiap bulan.', rec_3: 'Tambahkan lokasi geografis.' }
+            ];
+
+            const txtDefaults = [
+                { task_type: 'text_classification', suggested_target: 'sentiment', ipo_input: 'Data Unstructured Text (TXT). Berisi 2500 baris dokumen teks.', ipo_process: 'Text preprocessing (lowercasing, TF-IDF vectorization), Naive Bayes.', ipo_output: 'Kategorisasi teks sentimen (Positif/Negatif).' },
+                { quality_score: 92, target_column: 'sentiment', columns_info: 'text_content text, sentiment string' },
+                { rows_before: 2500, rows_after: 2480, cols_num: 0, cols_cat: 1, cols_dropped: 0, cols_card: 0, train_size: 1984, test_size: 496 },
+                { selected_model: 'Naive Bayes Classifier' },
+                { accuracy: 89.2, precision: 88.5, recall: 89.0, f1: 88.7 },
+                { refined_acc: 91.2, best_params: '{"alpha": 0.1}' },
+                { tech_summary: 'Model Naive Bayes berhasil dioptimasi dengan akurasi akhir 91.2%.' },
+                { mgmt_summary: 'Model klasifikasi teks siap memilah sentimen dengan keakuratan 91.2%.', rec_1: 'Gunakan model untuk memantau ulasan negatif.', rec_2: 'Tambahkan kamus stop-words Indonesia.', rec_3: 'Retrain berkala.' }
+            ];
+
+            if (modality === 'text' || modality === 'txt') return txtDefaults[stage] || {};
+            return csvDefaults[stage] || {};
+        }
+
+        function renderGrid2StageContent(index) {
+            const container = document.getElementById('g2-stage-dynamic-content');
+            if (!container) return;
+
+            const activeSub = pipelineState.grid2Queue[0] || pipelineState.grid3Data[0];
+            if (!activeSub) {
+                container.innerHTML = "<p>Tidak ada data aktif.</p>";
+                return;
+            }
+
+            const pipelineData = activeSub.pipeline_data || {};
+            const isCompleted = index < activeSub.current_stage;
+            const isActive = index === activeSub.current_stage;
+            const savedData = pipelineData[`stage_${index}`] || {};
+            const modality = activeSub.detected_data_type || activeSub.data_type || 'csv';
+            const defaults = getStageDefaults(modality, index);
+            const disAttr = (isCompleted || !isActive) ? "disabled" : "";
+
+            let html = "";
+
+            if (index === 0) {
+                const activeType = savedData.task_type || defaults.task_type || 'classification';
+                const cardDisClass = (isCompleted || !isActive) ? "disabled" : "";
+                html = `
+                    <div class="stage-info-box">
+                        <p><b>Tahap 1: Problem Framing & IPO (Format: ${modality.toUpperCase()})</b> - Pilih tipe problem framing dan lengkapi detail bagan di bawah.</p>
+                    </div>
+                    
+                    <div style="display:block; margin-bottom:12px; font-weight:600; font-size:0.82rem; color:rgba(255, 255, 255, 0.8);">Tipe Problem Framing</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
+                        <div id="problem-card-classification" class="problem-card ${cardDisClass} ${activeType === 'classification' ? 'active' : ''}" onclick="selectProblemType('classification')">
+                            <span class="problem-card-icon">🏷️</span>
+                            <div class="problem-card-title">Classification</div>
+                            <div class="problem-card-desc">Kategorisasi data ke dalam kelas label (Supervised)</div>
+                        </div>
+                        <div id="problem-card-regression" class="problem-card ${cardDisClass} ${activeType === 'regression' ? 'active' : ''}" onclick="selectProblemType('regression')">
+                            <span class="problem-card-icon">📈</span>
+                            <div class="problem-card-title">Regression</div>
+                            <div class="problem-card-desc">Prediksi nilai numerik kontinu/angka (Supervised)</div>
+                        </div>
+                        <div id="problem-card-clustering" class="problem-card ${cardDisClass} ${activeType === 'clustering' ? 'active' : ''}" onclick="selectProblemType('clustering')">
+                            <span class="problem-card-icon">🎯</span>
+                            <div class="problem-card-title">Clustering</div>
+                            <div class="problem-card-desc">Pengelompokan data tanpa label (Unsupervised)</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="stage0-task-type" value="${activeType}" ${disAttr}>
+
+                    <div class="form-row" id="target-column-row" style="${activeType === 'clustering' ? 'display:none;' : 'display:block;'}">
+                        <label>Target Prediksi</label>
+                        <input type="text" id="stage0-suggested-target" class="search-input" value="${savedData.suggested_target || defaults.suggested_target || ''}" ${disAttr}>
+                    </div>
+                    <div class="form-row">
+                        <label>Bagan Input</label>
+                        <textarea id="stage0-ipo-input" class="search-input" ${disAttr}>${savedData.ipo?.input || defaults.ipo_input || ''}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <label>Bagan Proses</label>
+                        <textarea id="stage0-ipo-process" class="search-input" ${disAttr}>${savedData.ipo?.process || defaults.ipo_process || ''}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <label>Bagan Output</label>
+                        <textarea id="stage0-ipo-output" class="search-input" ${disAttr}>${savedData.ipo?.output || defaults.ipo_output || ''}</textarea>
+                    </div>
+                `;
+            } else if (index === 1) {
+                html = `
+                    <div class="stage-info-box">
+                        <p><b>Tahap 2: Pendefinisian Model Dataset (Format: ${modality.toUpperCase()})</b> - Masukkan hasil profiling dataset dan kolom-kolomnya.</p>
+                    </div>
+                    <div class="form-row">
+                        <label>Kualitas Data (%)</label>
+                        <input type="number" id="stage1-quality-score" class="search-input" value="${savedData.quality_score || defaults.quality_score}" min="0" max="100" ${disAttr}>
+                    </div>
+                    <div class="form-row">
+                        <label>Nama Kolom Target</label>
+                        <input type="text" id="stage1-target-column" class="search-input" value="${savedData.target_column || defaults.target_column}" ${disAttr}>
+                    </div>
+                    <div class="form-row">
+                        <label>Daftar Struktur Kolom (Format: nama tipe, pisahkan dengan koma)</label>
+                        <textarea id="stage1-columns-info" class="search-input" ${disAttr}>${savedData.columns_info ? savedData.columns_info.map(c => `${c.name} ${c.type}`).join(', ') : defaults.columns_info}</textarea>
+                    </div>
+                `;
+            } else if (index === 2) {
+                html = `
+                    <div class="stage-info-box">
+                        <p><b>Tahap 3: Pemrosesan Data (Format: ${modality.toUpperCase()})</b> - Masukkan hasil preprocessing data dan jumlah split.</p>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:16px;">
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Baris Sebelum</label>
+                            <input type="number" id="stage2-rows-before" class="search-input" value="${savedData.cleaning_report?.rows_before || defaults.rows_before}" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Baris Sesudah</label>
+                            <input type="number" id="stage2-rows-after" class="search-input" value="${savedData.cleaning_report?.rows_after || defaults.rows_after}" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Kolom Numerik</label>
+                            <input type="number" id="stage2-cols-num" class="search-input" value="${savedData.cleaning_report?.columns_processed_numeric || defaults.cols_num}" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Kolom Kategori</label>
+                            <input type="number" id="stage2-cols-cat" class="search-input" value="${savedData.cleaning_report?.columns_processed_categorical || defaults.cols_cat}" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Kolom Missing Dibuang</label>
+                            <input type="number" id="stage2-cols-dropped" class="search-input" value="${savedData.cleaning_report?.columns_dropped_missing_pct || defaults.cols_dropped}" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Kardinalitas Dibuang</label>
+                            <input type="number" id="stage2-cols-card" class="search-input" value="${savedData.cleaning_report?.columns_dropped_high_cardinality || defaults.cols_card}" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Data Latih (Train)</label>
+                            <input type="number" id="stage2-train-size" class="search-input" value="${savedData.train_size || defaults.train_size}" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Data Uji (Test)</label>
+                            <input type="number" id="stage2-test-size" class="search-input" value="${savedData.test_size || defaults.test_size}" ${disAttr}>
+                        </div>
+                    </div>
+                `;
+            } else if (index === 3) {
+                html = `
+                    <div class="stage-info-box">
+                        <p><b>Tahap 4: Perencanaan Model & Refining (Format: ${modality.toUpperCase()})</b> - Pilih algoritma model utama.</p>
+                    </div>
+                    <div class="form-row">
+                        <label>Algoritma Model Terpilih</label>
+                        <select id="stage3-selected-model" class="search-input" ${disAttr}>
+                            <option value="Random Forest Classifier" ${(savedData.selected_model || defaults.selected_model) === 'Random Forest Classifier' ? 'selected' : ''}>Random Forest Classifier</option>
+                            <option value="Logistic Regression" ${(savedData.selected_model || defaults.selected_model) === 'Logistic Regression' ? 'selected' : ''}>Logistic Regression</option>
+                            <option value="Naive Bayes Classifier" ${(savedData.selected_model || defaults.selected_model) === 'Naive Bayes Classifier' ? 'selected' : ''}>Naive Bayes Classifier</option>
+                            <option value="Linear SVM" ${(savedData.selected_model || defaults.selected_model) === 'Linear SVM' ? 'selected' : ''}>Linear SVM</option>
+                            <option value="Gradient Boosting Regressor" ${(savedData.selected_model || defaults.selected_model) === 'Gradient Boosting Regressor' ? 'selected' : ''}>Gradient Boosting Regressor</option>
+                            <option value="Ridge Regression" ${(savedData.selected_model || defaults.selected_model) === 'Ridge Regression' ? 'selected' : ''}>Ridge Regression</option>
+                            <option value="Convolutional Neural Network (CNN)" ${(savedData.selected_model || defaults.selected_model) === 'Convolutional Neural Network (CNN)' ? 'selected' : ''}>Convolutional Neural Network (CNN)</option>
+                        </select>
+                    </div>
+                `;
+            } else if (index === 4) {
+                html = `
+                    <div class="stage-info-box">
+                        <p><b>Tahap 5: Pelatihan & Testing Model (Format: ${modality.toUpperCase()})</b> - Input metrik evaluasi model.</p>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:16px;">
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Accuracy / R2 (%)</label>
+                            <input type="number" id="stage4-accuracy" class="search-input" value="${savedData.metrics?.accuracy ? (savedData.metrics.accuracy * 100).toFixed(1) : defaults.accuracy}" min="0" max="100" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Precision (%)</label>
+                            <input type="number" id="stage4-precision" class="search-input" value="${savedData.metrics?.precision ? (savedData.metrics.precision * 100).toFixed(1) : defaults.precision}" min="0" max="100" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>Recall (%)</label>
+                            <input type="number" id="stage4-recall" class="search-input" value="${savedData.metrics?.recall ? (savedData.metrics.recall * 100).toFixed(1) : defaults.recall}" min="0" max="100" ${disAttr}>
+                        </div>
+                        <div class="form-row" style="margin-bottom:0;">
+                            <label>F1-Score (%)</label>
+                            <input type="number" id="stage4-f1" class="search-input" value="${savedData.metrics?.f1_score ? (savedData.metrics.f1_score * 100).toFixed(1) : defaults.f1}" min="0" max="100" ${disAttr}>
+                        </div>
+                    </div>
+                `;
+            } else if (index === 5) {
+                html = `
+                    <div class="stage-info-box">
+                        <p><b>Tahap 6: Refining Model (Format: ${modality.toUpperCase()})</b> - Input metrik model final setelah disetel (Tuning).</p>
+                    </div>
+                    <div class="form-row">
+                        <label>Akurasi Setelah Tuning (%)</label>
+                        <input type="number" id="stage5-refined-acc" class="search-input" value="${savedData.refined_metrics?.accuracy ? (savedData.refined_metrics.accuracy * 100).toFixed(1) : defaults.refined_acc}" min="0" max="100" ${disAttr}>
+                    </div>
+                    <div class="form-row">
+                        <label>Parameter Optimal Terbaik (JSON Format)</label>
+                        <textarea id="stage5-best-params" class="search-input" style="font-family:monospace;" ${disAttr}>${savedData.best_params ? JSON.stringify(savedData.best_params) : defaults.best_params}</textarea>
+                    </div>
+                `;
+            } else if (index === 6) {
+                html = `
+                    <div class="stage-info-box">
+                        <p><b>Tahap 7: Laporan Teknikal (Format: ${modality.toUpperCase()})</b> - Masukkan ulasan ringkasan analisis untuk tim teknis.</p>
+                    </div>
+                    <div class="form-row">
+                        <label>Laporan Teknis Singkat</label>
+                        <textarea id="stage6-tech-summary" class="search-input" style="min-height:180px;" ${disAttr}>${savedData.technical_report?.summary || defaults.tech_summary}</textarea>
+                    </div>
+                `;
+            } else if (index === 7) {
+                html = `
+                    <div class="stage-info-box">
+                        <p><b>Tahap 8: Laporan Manajemen (Format: ${modality.toUpperCase()})</b> - Masukkan narasi bisnis Bahasa Indonesia dan rekomendasi.</p>
+                    </div>
+                    <div class="form-row">
+                        <label>Narasi Bisnis Manajemen</label>
+                        <textarea id="stage7-mgmt-summary" class="search-input" ${disAttr}>${savedData.management_report?.summary || defaults.mgmt_summary}</textarea>
+                    </div>
+                    <div class="form-group-title">Rekomendasi Aksi Bisnis</div>
+                    <div class="form-row">
+                        <label>Rekomendasi Bisnis 1</label>
+                        <input type="text" id="stage7-rec-1" class="search-input" value="${savedData.management_report?.recommendations?.[0] || defaults.rec_1}" ${disAttr}>
+                    </div>
+                    <div class="form-row">
+                        <label>Rekomendasi Bisnis 2</label>
+                        <input type="text" id="stage7-rec-2" class="search-input" value="${savedData.management_report?.recommendations?.[1] || defaults.rec_2}" ${disAttr}>
+                    </div>
+                    <div class="form-row">
+                        <label>Rekomendasi Bisnis 3</label>
+                        <input type="text" id="stage7-rec-3" class="search-input" value="${savedData.management_report?.recommendations?.[2] || defaults.rec_3}" ${disAttr}>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+
+            const btn = document.getElementById('g2-btn-save-next');
+            if (isCompleted) {
+                btn.style.display = 'block';
+                btn.textContent = index === 7 ? 'Kembali ke Dashboard ✓' : 'Lanjut ke Tahap Berikutnya →';
+                btn.onclick = () => {
+                    if (index === 7) {
+                        goBack();
+                    } else {
+                        selectGrid2Stage(index + 1);
+                    }
+                };
+            } else if (isActive) {
+                btn.style.display = 'block';
+                btn.textContent = index === 7 ? 'Selesaikan Pipeline ✓' : 'Simpan & Lanjut →';
+                btn.onclick = () => saveManualStage(index);
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        async function saveManualStage(index) {
+            if (!activeSubmissionId) return;
+
+            const activeSub = pipelineState.grid2Queue[0] || pipelineState.grid3Data[0];
+            if (!activeSub) return;
+
+            const modality = activeSub.detected_data_type || activeSub.data_type || 'csv';
+            const body = {
+                stage_index: index,
+                stage_data: {}
+            };
+
+            try {
+                if (index === 0) {
+                    body.stage_data = {
+                        track: modality,
+                        task_type: document.getElementById('stage0-task-type').value,
+                        suggested_target: document.getElementById('stage0-suggested-target').value,
+                        ipo: {
+                            input: document.getElementById('stage0-ipo-input').value,
+                            process: document.getElementById('stage0-ipo-process').value,
+                            output: document.getElementById('stage0-ipo-output').value
+                        }
+                    };
+                    body.target_column = body.stage_data.suggested_target;
+                } else if (index === 1) {
+                    body.stage_data = {
+                        quality_score: parseFloat(document.getElementById('stage1-quality-score').value) || 100,
+                        target_column: document.getElementById('stage1-target-column').value,
+                        columns_info: document.getElementById('stage1-columns-info').value.split(',').map(s => {
+                            const parts = s.trim().split(' ');
+                            return { name: parts[0] || 'col', type: parts[1] || 'string', missing: 0 };
+                        })
+                    };
+                    body.target_column = body.stage_data.target_column;
+                } else if (index === 2) {
+                    body.stage_data = {
+                        success: true,
+                        cleaning_report: {
+                            rows_before: parseInt(document.getElementById('stage2-rows-before').value) || 0,
+                            rows_after: parseInt(document.getElementById('stage2-rows-after').value) || 0,
+                            columns_processed_numeric: parseInt(document.getElementById('stage2-cols-num').value) || 0,
+                            columns_processed_categorical: parseInt(document.getElementById('stage2-cols-cat').value) || 0,
+                            columns_dropped_missing_pct: parseInt(document.getElementById('stage2-cols-dropped').value) || 0,
+                            columns_dropped_high_cardinality: parseInt(document.getElementById('stage2-cols-card').value) || 0,
+                        },
+                        train_size: parseInt(document.getElementById('stage2-train-size').value) || 0,
+                        test_size: parseInt(document.getElementById('stage2-test-size').value) || 0
+                    };
+                } else if (index === 3) {
+                    body.stage_data = {
+                        selected_model: document.getElementById('stage3-selected-model').value,
+                        recommendations: [
+                            {
+                                model_name: document.getElementById('stage3-selected-model').value,
+                                score: 0.95,
+                                metric: modality === 'json' ? 'R2' : 'accuracy',
+                                description: 'Model pilihan manual user.'
+                            }
+                        ]
+                    };
+                    body.selected_model = body.stage_data.selected_model;
+                } else if (index === 4) {
+                    body.stage_data = {
+                        success: true,
+                        model_name: activeSub.pipeline_data.stage_3?.selected_model || 'Random Forest',
+                        metrics: {
+                            accuracy: parseFloat(document.getElementById('stage4-accuracy').value) / 100 || 0.95,
+                            precision: parseFloat(document.getElementById('stage4-precision').value) / 100 || 0.94,
+                            recall: parseFloat(document.getElementById('stage4-recall').value) / 100 || 0.94,
+                            f1_score: parseFloat(document.getElementById('stage4-f1').value) / 100 || 0.94
+                        }
+                    };
+                } else if (index === 5) {
+                    const refinedAcc = parseFloat(document.getElementById('stage5-refined-acc').value) / 100 || 0.96;
+                    const baseAcc = activeSub.pipeline_data.stage_4?.metrics?.accuracy || 0.94;
+
+                    body.stage_data = {
+                        success: true,
+                        baseline_metrics: { accuracy: baseAcc },
+                        refined_metrics: { accuracy: refinedAcc },
+                        metric_name: 'accuracy',
+                        performance_improvement_pct: Math.max(0, (refinedAcc - baseAcc) * 100),
+                        best_params: JSON.parse(document.getElementById('stage5-best-params').value || '{}')
+                    };
+                } else if (index === 6) {
+                    body.stage_data = {
+                        success: true,
+                        technical_report: {
+                            pipeline_summary: {
+                                selected_model: activeSub.pipeline_data.stage_3?.selected_model || 'Random Forest',
+                                track: modality,
+                                task_type: activeSub.pipeline_data.stage_0?.task_type || 'classification'
+                            },
+                            performance_comparison: {
+                                refined_metrics: {
+                                    accuracy: activeSub.pipeline_data.stage_5?.refined_metrics?.accuracy || 0.96
+                                }
+                            },
+                            summary: document.getElementById('stage6-tech-summary').value
+                        }
+                    };
+                } else if (index === 7) {
+                    body.stage_data = {
+                        success: true,
+                        management_report: {
+                            summary: document.getElementById('stage7-mgmt-summary').value,
+                            recommendations: [
+                                document.getElementById('stage7-rec-1').value.trim(),
+                                document.getElementById('stage7-rec-2').value.trim(),
+                                document.getElementById('stage7-rec-3').value.trim()
+                            ].filter(r => r.length > 0)
+                        }
+                    };
+                }
+            } catch (e) {
+                showToast('Format input parameter salah: ' + e.message, 'error');
+                return;
+            }
+
+            const btn = document.getElementById('g2-btn-save-next');
+            const originalText = btn.textContent;
+            btn.textContent = 'Menyimpan...';
+            btn.disabled = true;
+
+            try {
+                const csrfToken = getCookie('csrftoken');
+                const res = await fetch(`/api/v2/submissions/${activeSubmissionId}/approve_stage/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (res.ok) {
+                    showToast(`✓ Tahap ${index + 1} berhasil disimpan!`, 'success');
+                    await loadPipelineData();
+                    if (index < 7) {
+                        selectGrid2Stage(index + 1);
+                    } else {
+                        showToast('🎉 Semua 8 Tahap Selesai! Model siap digunakan.', 'success');
+                        setTimeout(() => goBack(), 1500);
+                    }
+                } else {
+                    const data = await res.json();
+                    showToast('Gagal menyimpan: ' + (data.error || 'Terjadi kesalahan'), 'error');
+                }
+            } catch (e) {
+                showToast('Gagal menyimpan: ' + e.message, 'error');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function restartGrid2Pipeline() {
+            if (!confirm('Apakah Anda yakin ingin mengulang seluruh proses pipeline dari awal (Tahap 1)?')) return;
+
+            try {
+                const csrfToken = getCookie('csrftoken');
+                const res = await fetch(`/api/v2/submissions/${activeSubmissionId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ pipeline_data: {}, current_stage: 0 })
+                });
+
+                if (res.ok) {
+                    showToast('Pipeline berhasil diulang dari Tahap 1.', 'success');
+                    await loadPipelineData();
+                } else {
+                    showToast('Gagal mengulang pipeline.', 'error');
+                }
+            } catch (e) {
+                showToast('Terjadi kesalahan: ' + e.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

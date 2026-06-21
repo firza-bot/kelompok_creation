@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligence Creation — Structured Data</title>
+    <!-- React CSS Bundle -->
+    <link rel="stylesheet" href="{% static 'wizard/main.css' %}">
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased font-sans">
+    <div id="root"></div>
+
+    <!-- Pass Django context variables to React global scope -->
+    <script>
+        window.SUBMISSION_ID = "{{ submission_id }}";
+        // Configure API URL base for Django hosted endpoints
+        window.BACKEND_URL = ""; 
+    </script>
+
+    <!-- React JS Bundle -->
+    <script src="{% static 'wizard/main.js' %}"></script>
+</body>
+</html>

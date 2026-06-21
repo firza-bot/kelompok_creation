@@ -1,0 +1,6 @@
+column,dtype,description
+customer_lifetime_days,integer,Days between signup_date and last_purchase_date
+loyalty_tier,string,"Tier based on total_spent: Bronze<$400, Silver<$1800, Gold<$5000, Platinum≥$5000"
+customer_id,string,Unique customer identifier (CUST-00001 … CUST-01200)
+satisfaction_score,integer,Post-purchase satisfaction rating: 1 (very dissatisfied) – 5 (very satisfied)
+total_spent_usd,float,Total lifetime spend in US dollars

@@ -1,0 +1,21 @@
+column,dtype,description
+days_since_last_purchase,integer,Days between last_purchase_date and 2024-12-31 (snapshot date)
+preferred_category,string,Product category with the most purchases
+age,integer,Customer age in years (18–75)
+avg_pages_per_session,float,Average number of pages viewed per session
+income_bracket,string,Self-reported annual household income range (USD)
+gender,string,Self-reported gender identity
+avg_order_value_usd,float,Average value per order in US dollars
+device_type,string,"Primary device used to browse/purchase (Mobile, Desktop, Tablet)"
+country,string,Country of residence (15 countries across 4 regions)
+region,string,Broader geographic region derived from country
+referral_source,string,Channel through which the customer first arrived (acquisition source)
+discount_usage_rate,float,Proportion of orders where a discount code was applied (0–1)
+avg_session_duration_min,float,Average browsing session length in minutes
+return_rate,float,Proportion of orders that contained at least one returned item (0–1)
+churn,integer,"Binary target: 1 = churned (inactive >365 days, or >180 days + satisfaction ≤2), 0 = active"
+last_purchase_date,date,Date of the customer's most recent purchase (YYYY-MM-DD)
+total_orders,integer,Cumulative number of orders placed
+preferred_payment_method,string,Most frequently used payment method
+newsletter_subscribed,boolean,Whether the customer opted into marketing emails
+signup_date,date,Date the customer created their account (YYYY-MM-DD)

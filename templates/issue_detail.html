@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ issue.issue_key }} - IntRing PM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0f111a;
+            --bg-card: #161925;
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #2a2d3d;
+            --primary-hover: #0891b2;
+            --info-box: rgba(255, 255, 255, 0.03);
+        }
+
+        body {
+            margin: 0; padding: 0; font-family: 'DM Sans', sans-serif;
+            background: var(--bg-body); color: var(--text-main);
+        }
+        h1, h2, h3, .issue-id { font-family: 'Syne', sans-serif; }
+        input, select, textarea, button { font-family: inherit; }
+
+        /* Navbar */
+        .navbar {
+            background: var(--bg-card); padding: 15px 30px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+        .btn-back {
+            text-decoration: none; color: var(--text-main); font-weight: 600; padding: 8px 16px;
+            border: 1px solid var(--border); border-radius: 6px; transition: 0.2s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .btn-back:hover { background: rgba(255, 255, 255, 0.1); }
+        .header-title { font-size: 1rem; font-weight: 500; color: var(--text-muted); }
+        .btn-save {
+            background: var(--primary); color: white; padding: 10px 24px; border: none; border-radius: 6px;
+            font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 1rem;
+        }
+        .btn-save:hover { background: var(--primary-hover); }
+
+        /* Container */
+        .container {
+            max-width: 1400px; margin: 30px auto; padding: 0 20px; display: grid;
+            grid-template-columns: 1fr 350px; gap: 30px;
+        }
+
+        /* Left Content */
+        .content-main {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 30px; min-height: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .issue-desc { margin-top: 20px; margin-bottom: 40px; color: var(--text-muted); line-height: 1.6; white-space: pre-wrap; }
+
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 25px; overflow-x: auto; }
+        .tab {
+            padding: 12px 20px; cursor: pointer; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid transparent;
+        }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Right Sidebar */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .side-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .side-item { margin-bottom: 15px; }
+        .side-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 5px; }
+        .side-val { font-size: 0.95rem; color: var(--text-main); font-weight: 500; }
+        .badge {
+            display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+        }
+        .badge.medium { background: rgba(217, 119, 6, 0.2); color: #fbbf24; border: 1px solid rgba(217, 119, 6, 0.5); }
+        .badge.high { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5); }
+        .badge.low { background: rgba(2, 132, 199, 0.2); color: #38bdf8; border: 1px solid rgba(2, 132, 199, 0.5); }
+
+        /* Inputs */
+        input[type="text"], input[type="number"], textarea, select, input[type="file"] {
+            width: 100%; padding: 10px 15px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; margin-top: 8px; font-family: inherit; box-sizing: border-box;
+            background: rgba(0,0,0,0.2); color: var(--text-main);
+        }
+        input[type="file"] { padding: 8px; }
+        .field-group { margin-bottom: 20px; }
+        .info-box { background: var(--info-box); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        
+        table.custom-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table.custom-table th, table.custom-table td { border: 1px solid var(--border); padding: 8px; text-align: left; font-size: 0.9rem; }
+        table.custom-table th { background: rgba(255,255,255,0.05); color: var(--text-main); }
+    </style>
+</head>
+<body>
+    <form method="POST" id="main-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="navbar">
+            <div style="display:flex; align-items:center; gap:20px;">
+                <a href="{% url 'dashboard' %}" class="btn-back">&larr; Kembali</a>
+                <div class="header-title">
+                    {{ issue.project.name }} / Issue <br>
+                    <span style="color:var(--text-main); font-weight:800; font-size:1.4rem;">{{ issue.issue_key }} &mdash; {{ issue.title }}</span>
+                </div>
+            </div>
+            <button type="submit" class="btn-save">Simpan Data</button>
+        </div>
+
+        <div class="container">
+            <div class="content-main">
+                <div class="issue-desc">{{ issue.description|default:"Tidak ada deskripsi." }}</div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('mo', event)">Meaningful Objectives</div>
+                    <div class="tab" onclick="switchTab('ie', event)">Intelligence Experiences</div>
+                    <div class="tab" onclick="switchTab('ii', event)">Intelligence Implementation</div>
+                    <div class="tab" onclick="switchTab('cs', event)">Creation Status</div>
+                    <div class="tab" onclick="switchTab('orch', event)">Orchestration</div>
+                </div>
+
+                <!-- Tab 1: MO -->
+                <div id="tab-mo" class="tab-content active">
+                    {% if mo %}
+                        <div class="info-box"><strong style="color:var(--primary);">Organizational Objectives:</strong><br>
+                            <span style="color:var(--text-muted);">Tujuan:</span> {{ mo.organizational.obj }}<br>
+                            <span style="color:var(--text-muted);">Cara:</span> {{ mo.organizational.how }}<br>
+                            <span style="color:var(--text-muted);">Ukuran:</span> {{ mo.organizational.measure }}
+                        </div>
+                        <div class="info-box"><strong style="color:var(--primary);">Leading Indicators:</strong><br>
+                            <table class="custom-table">
+                                {% for item in mo.leading_indicators %}
+                                    <tr>
+                                        {% for key, val in item.items %}
+                                            <td>{{ val }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        <div class="info-box"><strong style="color:var(--primary);">User Outcomes:</strong><br>
+                            <span style="color:var(--text-muted);">Tujuan:</span> {{ mo.user_outcomes.obj }}<br>
+                            <span style="color:var(--text-muted);">Cara:</span> {{ mo.user_outcomes.how }}<br>
+                            <span style="color:var(--text-muted);">Ukuran:</span> {{ mo.user_outcomes.measure }}
+                        </div>
+                        <div class="info-box"><strong style="color:var(--primary);">Model Properties:</strong><br>
+                            <span style="color:var(--text-muted);">Spesifikasi:</span> {{ mo.model_properties.obj }}<br>
+                            <span style="color:var(--text-muted);">Cara:</span> {{ mo.model_properties.how }}<br>
+                            <span style="color:var(--text-muted);">Ukuran:</span> {{ mo.model_properties.measure }}
+                        </div>
+                    {% else %}
+                        <p style="color:var(--text-muted);">Data Meaningful Objectives kosong.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tab 2: IE -->
+                <div id="tab-ie" class="tab-content">
+                    {% if ie %}
+                        <div class="info-box"><strong style="color:var(--primary);">Penyajian Kecerdasan:</strong><br>
+                            <span style="color:var(--text-muted);">Mode:</span> 
+                                {% if ie.presentation.automate %}Automate{% endif %}
+                                {% if ie.presentation.prompt %}, Prompt{% endif %}
+                                {% if ie.presentation.organisation %}, Organisation{% endif %}
+                                {% if ie.presentation.annotate %}, Annotate{% endif %}<br>
+                            <span style="color:var(--text-muted);">Deskripsi:</span> {{ ie.presentation.desc }}
+                        </div>
+                        <div class="info-box"><strong style="color:var(--primary);">Fungsi Realisasi:</strong><br>
+                            <table class="custom-table">
+                                {% for item in ie.functions %}
+                                    <tr>
+                                        {% for key, val in item.items %}
+                                            {% if val %}<td>{{ val }}</td>{% endif %}
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        <div class="info-box"><strong style="color:var(--primary);">Minimalisasi Kesalahan:</strong><br>
+                            <table class="custom-table">
+                                {% for item in ie.error_mitigation %}
+                                    <tr>
+                                        {% for key, val in item.items %}
+                                            {% if val %}<td>{{ val }}</td>{% endif %}
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        <div class="info-box"><strong style="color:var(--primary);">Pengumpulan Data:</strong><br>
+                            <table class="custom-table">
+                                {% for item in ie.data_collection %}
+                                    <tr>
+                                        {% for key, val in item.items %}
+                                            {% if val %}<td>{{ val }}</td>{% endif %}
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    {% else %}
+                        <p style="color:var(--text-muted);">Data Intelligence Experiences kosong.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tab 3: II -->
+                <div id="tab-ii" class="tab-content">
+                    {% if ii %}
+                        <div class="info-box"><strong style="color:var(--primary);">Proses Bisnis:</strong><br>
+                            <table class="custom-table">
+                                {% for item in ii.business_process %}
+                                    <tr>
+                                        {% for key, val in item.items %}
+                                            {% if val %}<td>{{ val }}</td>{% endif %}
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                        <div class="info-box"><strong style="color:var(--primary);">Teknologi per Proses:</strong><br>
+                            <table class="custom-table">
+                                {% for item in ii.technology %}
+                                    <tr>
+                                        {% for key, val in item.items %}
+                                            {% if val %}<td>{{ val }}</td>{% endif %}
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    {% else %}
+                        <p style="color:var(--text-muted);">Data Intelligence Implementation kosong.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tab 4: Creation Status (Editable) -->
+                <div id="tab-cs" class="tab-content">
+                    <div class="field-group">
+                        <label class="side-label">Realization Status (0-100)</label>
+                        <input type="number" name="realization_status" min="0" max="100" value="{{ c_status.realization_status }}">
+                    </div>
+                    <div class="field-group">
+                        <label class="side-label">Development Constraints</label>
+                        <textarea name="development_constraints" rows="4" placeholder="Tuliskan kendala pengembangan di sini...">{{ c_status.development_constraints }}</textarea>
+                    </div>
+                    <div class="field-group">
+                        <label class="side-label">EVIDENCE FILE / BUKTI PENGERJAAN</label>
+                        {% if attachments %}
+                            <div style="margin-bottom:10px; font-size:0.9rem;">
+                                File saat ini:<br>
+                                {% for att in attachments %}
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:0.5rem; margin-top:0.5rem; border-radius:0.25rem;">
+                                    <a href="/media/{{ att.file }}" target="_blank" style="color:var(--primary); text-decoration:none;">{{ att.original_name }}</a>
+                                    <button type="submit" name="delete_attachment" value="{{ att.id }}" class="btn-primary" style="background:#ef4444; padding:0.2rem 0.5rem; font-size:0.8rem;">Hapus</button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <input type="file" name="evidence_file">
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Klik 'Simpan Data' di pojok kanan atas untuk menyimpan.</p>
+                </div>
+
+                <!-- Tab 5: Orchestration (Editable) -->
+                <div id="tab-orch" class="tab-content">
+                    <div style="margin-bottom: 20px;">
+                        {% for orch in orchestrations %}
+                            <div class="info-box" style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <strong style="color:var(--primary);">{{ orch.category }}</strong> <br>
+                                    <span style="color:var(--text-muted); font-size:0.85rem;">Status: {{ orch.status|title }}</span>
+                                </div>
+                                <span style="color:var(--text-muted); font-size:0.8rem;">{{ orch.created_at|date:"d M Y" }}</span>
+                            </div>
+                        {% empty %}
+                            <p style="color:var(--text-muted);">Belum ada orchestration phase.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <div style="border-top:1px solid var(--border); padding-top:20px;">
+                        <h3 style="margin-top:0; font-size:1.1rem; color:var(--text-main);">Tambah Phase Baru</h3>
+                        <div class="field-group">
+                            <label class="side-label">Kategori Phase</label>
+                            <select name="new_orch_category">
+                                <option value="">-- Pilih --</option>
+                                <option value="Planning">Planning</option>
+                                <option value="Development">Development</option>
+                                <option value="Testing">Testing</option>
+                                <option value="Maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label class="side-label">Status</label>
+                            <select name="new_orch_status">
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="blocked">Blocked</option>
+                            </select>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-muted);">Isi form ini lalu klik 'Simpan Data' di pojok kanan atas untuk menambah phase.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="sidebar">
+                <div class="side-card">
+                    <div class="side-item">
+                        <div class="side-label">Priority</div>
+                        <div class="side-val">
+                            <span class="badge {% if issue.priority|lower == 'medium' %}medium{% elif issue.priority|lower == 'high' or issue.priority|lower == 'critical' %}high{% else %}low{% endif %}">
+                                {{ issue.priority|title|default:"Medium" }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="side-item">
+                        <div class="side-label">Type</div>
+                        <div class="side-val">{{ issue.type|title|default:"Task" }}</div>
+                    </div>
+                    <div class="side-item">
+                        <div class="side-label">Assignee</div>
+                        <div class="side-val">{{ issue.assignee.name|default:"Unassigned" }}</div>
+                    </div>
+                    <div class="side-item">
+                        <div class="side-label">Sprint</div>
+                        <div class="side-val">{{ issue.sprint.name|default:"No Sprint (Backlog)" }}</div>
+                    </div>
+                    <div class="side-item">
+                        <div class="side-label">Story Points</div>
+                        <div class="side-val">{{ issue.story_points|default:"&mdash;" }}</div>
+                    </div>
+                    <div class="side-item">
+                        <div class="side-label">Labels</div>
+                        <div class="side-val">{{ issue.labels|default:"&mdash;" }}</div>
+                    </div>
+                    <div class="side-item">
+                        <div class="side-label">Due Date</div>
+                        <div class="side-val">{{ issue.due_date|date:"d M Y"|default:"&mdash;" }}</div>
+                    </div>
+                    <div class="side-item">
+                        <div class="side-label">Reporter</div>
+                        <div class="side-val">{{ issue.reporter.name|default:"Demo User" }}</div>
+                    </div>
+                    <div class="side-item" style="border-top: 1px solid var(--border); padding-top:15px;">
+                        <div class="side-label">Created</div>
+                        <div class="side-val">{{ issue.created_at|date:"d M Y" }}</div>
+                    </div>
+                    <div class="side-item">
+                        <div class="side-label">Updated</div>
+                        <div class="side-val">{{ issue.updated_at|date:"d M Y" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        function switchTab(tabId, event) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
