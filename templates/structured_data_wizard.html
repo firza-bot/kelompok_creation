@@ -7,15 +7,19 @@
     <title>Intelligence Creation — Structured Data</title>
     <!-- React CSS Bundle -->
     <link rel="stylesheet" href="{% static 'wizard/main.css' %}">
+    <!-- Chart.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <!-- BoxPlot plugin (must load AFTER Chart.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot/build/index.umd.min.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased font-sans">
+<body>
     <div id="root"></div>
 
     <!-- Pass Django context variables to React global scope -->
     <script>
         window.SUBMISSION_ID = "{{ submission_id }}";
         // Configure API URL base for Django hosted endpoints
-        window.BACKEND_URL = ""; 
+        window.BACKEND_URL = "";
     </script>
 
     <!-- React JS Bundle -->
