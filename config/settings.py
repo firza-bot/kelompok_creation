@@ -88,7 +88,7 @@ DATABASES = {
     },
     'uiux_db': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': r'C:\Kuliah\UIUX\Backend\intring_django.db',
+        'NAME': BASE_DIR / 'uiux.db',
     }
 }
 
