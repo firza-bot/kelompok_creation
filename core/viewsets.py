@@ -380,61 +380,6 @@ class IntelligenceSubmissionViewSet(viewsets.ModelViewSet):
 
         return qs
 
-    def perform_update(self, serializer):
-        import os
-        old_status = self.get_object().status
-        instance = serializer.save()
-        
-        # Jika status berubah menjadi 'sent' (Kirim Final)
-        if old_status != 'sent' and instance.status == 'sent':
-            import requests
-            
-            # URL API Implementasi (Hardcoded fallback ke VPS publik)
-            target_url = os.environ.get('IMPLEMENTATION_API_URL', 'http://72.61.215.222/implementation/api-content/datasets/')
-            
-            try:
-                data = {
-                    'name': instance.sender_name or instance.title or 'Dataset',
-                    'file_name': os.path.basename(instance.source_file.name) if instance.source_file else '-',
-                    'file_type': instance.detected_data_type or 'unknown',
-                    'activity': 'todo',
-                    'version': 'v1.1',
-                    'description': instance.description or 'Dikirim dari Intelligence Creation',
-                    'source_type': 'api',
-                    'user_email': instance.sender_email or 'ana', # default 'ana' based on screenshot
-                }
-                
-                # Ambil score dari stage 1 jika ada
-                pd = instance.pipeline_data or {}
-                stage_1 = pd.get('stage_1', pd.get('1', {}))
-                if isinstance(stage_1, dict) and 'quality_score' in stage_1:
-                    data['quality_score'] = stage_1['quality_score']
-                else:
-                    data['quality_score'] = 88.0 # default if not found
-                
-                files = None
-                if instance.source_file and os.path.exists(instance.source_file.path):
-                    # Kami menggunakan field 'pdf_file' karena di sisi Implementation FileField-nya bernama 'pdf_file'
-                    # walaupun file aslinya bisa CSV, PDF, dsb (bebas jenis file).
-                    files = {'pdf_file': (os.path.basename(instance.source_file.name), open(instance.source_file.path, 'rb'))}
-                
-                if files:
-                    response = requests.post(target_url, data=data, files=files, timeout=10)
-                    files['pdf_file'][1].close() # pastikan file diclose
-                else:
-                    response = requests.post(target_url, data=data, timeout=10)
-                    
-                import logging
-                logger = logging.getLogger(__name__)
-                if response.status_code in [200, 201]:
-                    logger.info(f"Berhasil mengirim ke Implementation API: {response.text}")
-                else:
-                    logger.error(f"Gagal mengirim ke Implementation API: {response.status_code} - {response.text}")
-            except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Exception saat mengirim ke Implementation API: {str(e)}")
-
     @action(detail=True, methods=['post'])
     def run_stage(self, request, pk=None):
         """POST /api/v2/submissions/{id}/run_stage/ → Eksekusi skrip ML untuk tahap saat ini"""
