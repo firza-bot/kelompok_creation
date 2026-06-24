@@ -169,3 +169,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 LOGIN_URL = '/login.html'
+
+FORCE_SCRIPT_NAME = '/creation'
+STATIC_URL = '/creation/static/'
+MEDIA_URL = '/creation/media/'
+
