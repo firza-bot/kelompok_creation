@@ -108,10 +108,11 @@ def issue_full_detail_page(request, issue_id):
         files = {}
         if 'evidence_file' in request.FILES:
             upload = request.FILES['evidence_file']
+            file_content = upload.read()
+            upload.seek(0)
             c_status.evidence_file = upload
             c_status.save()
-            with c_status.evidence_file.open('rb') as f:
-                files = {'evidence_file': (upload.name, f.read(), upload.content_type)}
+            files = {'evidence_file': (upload.name, file_content, upload.content_type)}
             
         new_category = request.POST.get('new_orch_category')
         if new_category:
