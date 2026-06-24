@@ -4,6 +4,10 @@ from django.contrib.auth.decorators import login_required
 from .models import IssueCreationStatus, OrchestrationPhase
 import requests
 import os
+import logging
+import json
+
+logger = logging.getLogger(__name__)
 
 INTRING_API_URL = os.environ.get('INTRING_API_URL', 'http://72.61.215.222/intelligence-engineering/api')
 INTRING_SECRET = 'INTRING_SECRET_123'
@@ -94,6 +98,10 @@ def issue_full_detail_page(request, issue_id):
     # -------------------------------
     
     if request.method == 'POST':
+        logger.warning("[IC-SYNC] ===== POST received for issue %s =====", issue_id)
+        logger.warning("[IC-SYNC] POST keys: %s", list(request.POST.keys()))
+        logger.warning("[IC-SYNC] FILES keys: %s", list(request.FILES.keys()))
+        
         # Process POST via API
         realization = request.POST.get('realization_status')
         if realization:
@@ -108,16 +116,24 @@ def issue_full_detail_page(request, issue_id):
         files = {}
         if 'evidence_file' in request.FILES:
             upload = request.FILES['evidence_file']
+            logger.warning("[IC-SYNC] Upload found: name=%s, size=%s, content_type=%s, type=%s",
+                           upload.name, upload.size, upload.content_type, type(upload).__name__)
             if upload.size > 0:
                 upload.seek(0)
                 file_content = upload.read()
+                logger.warning("[IC-SYNC] Read %d bytes from upload", len(file_content))
                 upload.seek(0)
                 c_status.evidence_file = upload
                 c_status.save()
                 files = {'evidence_file': (upload.name, file_content, upload.content_type)}
+            else:
+                logger.warning("[IC-SYNC] Upload size is 0, skipping")
+        else:
+            logger.warning("[IC-SYNC] No evidence_file in request.FILES")
 
         delete_ev = False
         if request.POST.get('delete_attachment'):
+            logger.warning("[IC-SYNC] Delete attachment requested")
             c_status.evidence_file = None
             c_status.save()
             delete_ev = True
@@ -130,7 +146,6 @@ def issue_full_detail_page(request, issue_id):
                 status=request.POST.get('new_orch_status', 'in_progress'),
             )
             
-        import json
         orch_list = list(OrchestrationPhase.objects.filter(uiux_issue_id=issue_id).values('category', 'status', 'start_date', 'end_date', 'created_at'))
         # Convert datetime to string for json serialization
         for o in orch_list:
@@ -145,11 +160,20 @@ def issue_full_detail_page(request, issue_id):
         }
         if delete_ev:
             post_data['delete_evidence'] = 'true'
+
+        url = f"{INTRING_API_URL}/integration/ic-issues/{issue_id}/update"
+        logger.warning("[IC-SYNC] Sending POST to %s", url)
+        logger.warning("[IC-SYNC] post_data keys: %s", list(post_data.keys()))
+        logger.warning("[IC-SYNC] files keys: %s, file sizes: %s", 
+                       list(files.keys()), 
+                       {k: len(v[1]) for k, v in files.items()} if files else 'empty')
         
         try:
-            requests.post(f"{INTRING_API_URL}/integration/ic-issues/{issue_id}/update", data=post_data, files=files, params={'token': INTRING_SECRET}, timeout=10)
+            resp = requests.post(url, data=post_data, files=files, 
+                                 params={'token': INTRING_SECRET}, timeout=30)
+            logger.warning("[IC-SYNC] Response status: %s, body: %s", resp.status_code, resp.text[:500])
         except Exception as e:
-            pass
+            logger.error("[IC-SYNC] POST FAILED with exception: %s", str(e))
             
         return redirect('issue_full_detail', issue_id=issue_id)
 
