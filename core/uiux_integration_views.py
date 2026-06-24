@@ -54,14 +54,9 @@ import urllib.request
 from urllib.error import URLError, HTTPError
 def api_intring_status(request):
     try:
-        urllib.request.urlopen('http://127.0.0.1:8001/', timeout=1.5)
+        from django.db import connections
+        connections['uiux_db'].ensure_connection()
         return JsonResponse({"online": True})
-    except HTTPError:
-        # Server responded with an error (e.g. 404, 403), but it IS online
-        return JsonResponse({"online": True})
-    except URLError:
-        # Server is not reachable
-        return JsonResponse({"online": False})
     except Exception:
         return JsonResponse({"online": False})
 
