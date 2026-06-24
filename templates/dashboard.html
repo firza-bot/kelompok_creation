@@ -7595,7 +7595,8 @@
         
         if (!d || d.length === 0) {
             mEl.innerHTML = '<div class="pg-queue-empty"><span>🔒</span><p>Menunggu kiriman dari Grid 3</p></div>';
-            sBtn.disabled = true; return;
+            if (sBtn) sBtn.disabled = false; // Always enabled per user request
+            return;
         }
         
         // Build data table like the screenshot
@@ -8485,7 +8486,10 @@
 
     // --- GRID 4 → 5 ---
     function openSendToGrid5Modal() {
-        if (pipelineState.grid3Data.length === 0) return;
+        if (!pipelineState.grid3Data || pipelineState.grid3Data.length === 0) {
+            showToast('Belum ada data dari Grid 3 untuk dikirim!', 'error');
+            return;
+        }
         const activeSub = pipelineState.grid3Data[0];
         document.getElementById('pm-summary-4to5').innerHTML = `
             <div class="pm-summary-row"><span>Jumlah Data</span><span>1 item</span></div>
@@ -8509,7 +8513,7 @@
         const dEl = document.getElementById('g5-delivery-list'), sBtn = document.getElementById('g5-send-btn');
         if (!r || r.length === 0) {
             dEl.innerHTML = '<div class="pg-queue-empty"><span>🔒</span><p>Menunggu kiriman dari Grid 4</p></div>';
-            sBtn.disabled = true;
+            if (sBtn) sBtn.disabled = false; // Always enabled per user request
         } else {
             dEl.innerHTML = `<div style="padding:12px 14px;background:var(--bg);border:1px solid rgba(236,72,153,0.3);border-radius:10px;">
                 <div style="font-size:0.82rem;color:var(--white);font-weight:600;">✅ ${r.length} item siap dikirim final</div>
@@ -8534,7 +8538,10 @@
     }
 
     function executeFinalSend() {
-        if (pipelineState.grid4Ready.length === 0) return;
+        if (!pipelineState.grid4Ready || pipelineState.grid4Ready.length === 0) {
+            showToast('Belum ada data dari Grid 4 untuk dikirim final!', 'error');
+            return;
+        }
         const activeSub = pipelineState.grid4Ready[0];
         document.getElementById('pm-summary-final').innerHTML = `
             <div class="pm-summary-row"><span>Nama Dataset</span><span>${activeSub.title}</span></div>
