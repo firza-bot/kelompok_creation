@@ -97,6 +97,12 @@ urlpatterns = [
          name='api_submission_stage_update'),
 
     # ============================================================
+    # DATAGO INTEGRATION API
+    # ============================================================
+    path('api/datago/request/', views.api_request_to_datago, name='api_request_to_datago'),
+    path('api/submissions/<int:submission_id>/receive_from_datago/', views.api_receive_from_datago, name='api_receive_from_datago'),
+
+    # ============================================================
     # DRF ROUTER — semua CRUD endpoint v2
     # Contoh: GET /api/v2/data-collection/
     #         POST /api/v2/datasets/
