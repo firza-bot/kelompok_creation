@@ -6454,21 +6454,12 @@
     }
 
     function updateG2SendBtnMode() {
-        const hasFile = g2SelectedFile !== null;
         const hasSelected = pipelineState.grid1Selected.length > 0;
         const btn = document.getElementById('g2-send-btn');
         const countEl = document.getElementById('g2-send-count');
         if (btn) {
-            if (hasFile) {
-                btn.disabled = false;
-                if (countEl) countEl.textContent = '1';
-            } else if (hasSelected) {
-                btn.disabled = false;
-                if (countEl) countEl.textContent = hasSelected;
-            } else {
-                btn.disabled = true;
-                if (countEl) countEl.textContent = '0';
-            }
+            btn.disabled = false; // Selalu enable sesuai request
+            if (countEl) countEl.textContent = hasSelected ? hasSelected : '0';
         }
     }
 
@@ -6479,6 +6470,91 @@
         } else if (pipelineState.grid1Selected.length > 0) {
             // Mode pilih dari inbox
             openSendToGrid3Modal();
+        } else {
+            // Mode bypass (API belum tersambung / kosong)
+            createDummySubmission();
+        }
+    }
+
+    async function createDummySubmission() {
+        const form = document.querySelector('.g2-form');
+        const judul = document.getElementById('g2-form-title')?.value.trim() || 'Data Manual (Dummy)';
+        const deskripsi = document.getElementById('g2-form-desc')?.value.trim() || '';
+        const kontak = document.getElementById('g2-form-contact')?.value.trim() || 'user@local';
+        const urgensi = document.getElementById('g2-form-urgency')?.value || 'medium';
+        const minRowVal = document.getElementById('g2-form-minrow')?.value.trim() || '';
+        const reqColsVal = document.getElementById('g2-form-reqcols')?.value.trim() || '';
+
+        const dummyContent = "This is a dummy dataset generated because no API file was selected.\n" + reqColsVal;
+        const blob = new Blob([dummyContent], { type: 'text/plain' });
+        const file = new File([blob], 'dummy_dataset.txt', { type: 'text/plain' });
+
+        const formData = new FormData();
+        formData.append('source_file', file);
+        formData.append('title', judul);
+        formData.append('description', deskripsi);
+        formData.append('contact_email', kontak);
+        formData.append('urgency', urgensi);
+        formData.append('sender_name', document.getElementById('user-name')?.textContent.trim() || 'User');
+        formData.append('sender_team', 'Manual/Dummy Entry');
+
+        const csrfToken = getCookie('csrftoken') || '';
+        try {
+            const btn = document.getElementById('g2-send-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Memproses...';
+            }
+            const res = await fetch('/api/v2/submissions/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok) {
+                // Tambahkan ekstra metadata via PATCH
+                await fetch(`/api/v2/submissions/${data.id}/`, {
+                    method: 'PATCH',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        extra_metadata: { min_rows: minRowVal, required_columns: reqColsVal }
+                    })
+                });
+
+                // Auto-approve ke Grid 3
+                const approveRes = await fetch(`/api/v2/submissions/${data.id}/approve_stage/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                if (approveRes.ok) {
+                    showToast('✓ Data (Dummy) berhasil dikirim ke Grid 3: ' + judul, 'success');
+                } else {
+                    showToast('✓ File diunggah. Proses ke Grid 3 gagal.', 'info');
+                }
+                
+                if (btn) {
+                    btn.innerHTML = 'Kirim ke Grid Selanjutnya → <span class="pg-send-count" id="g2-send-count">0</span>';
+                    btn.disabled = false;
+                }
+                
+                if (form) form.reset();
+                await loadPipelineData();
+            } else {
+                showToast('Gagal memproses dummy: ' + (data.error || 'Terjadi kesalahan'), 'error');
+                if (btn) {
+                    btn.innerHTML = 'Kirim ke Grid Selanjutnya → <span class="pg-send-count" id="g2-send-count">0</span>';
+                    btn.disabled = false;
+                }
+            }
+        } catch(e) {
+            showToast('Gagal: ' + e.message, 'error');
+            const btn = document.getElementById('g2-send-btn');
+            if (btn) {
+                btn.innerHTML = 'Kirim ke Grid Selanjutnya → <span class="pg-send-count" id="g2-send-count">0</span>';
+                btn.disabled = false;
+            }
         }
     }
 
