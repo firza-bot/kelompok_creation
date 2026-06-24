@@ -13,6 +13,7 @@ services:
       - INTRING_API_URL=${INTRING_API_URL:-}
     networks:
       - django_net
+      - global_gateway_net
 
   nginx:
     image: nginx:alpine
