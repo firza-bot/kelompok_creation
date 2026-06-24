@@ -1187,11 +1187,13 @@ def api_pdf_report(request, job_id):
     # Load processed dataset for Grid 3 visualization adaptation
     import pandas as pd
     import os
-    from django.conf import settings
     dataset_id = res.get("dataset_id")
     df_json_str = "[]"
     if dataset_id:
-        path = os.path.join(settings.MEDIA_ROOT, 'datasets', f'processed_{dataset_id}.csv')
+        path = os.path.join(DATASETS_DIR, f'{dataset_id}_processed.csv')
+        if not os.path.exists(path):
+            path = os.path.join(DATASETS_DIR, f'{dataset_id}.csv')
+        
         if os.path.exists(path):
             try:
                 # only load top 500 rows to keep HTML size small
