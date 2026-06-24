@@ -89,13 +89,29 @@ def issue_full_detail_page(request, issue_id):
         if del_att:
             try:
                 att = UIUXAttachment.objects.using('uiux_db').get(id=int(del_att), issue_id=issue_id)
-                # Remove file physically
-                file_path = os.path.join(r"C:\Kuliah\UIUX\Backend\media", att.file.replace('/', '\\'))
-                local_path = os.path.join(r"C:\Kuliah\project_besar4\media", att.file.replace('/', '\\'))
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                if os.path.exists(local_path):
-                    os.remove(local_path)
+                # Remove file physically from Django media
+                from django.conf import settings
+                django_path = os.path.join(settings.MEDIA_ROOT, att.file.replace('/', '\\'))
+                if os.path.exists(django_path):
+                    try:
+                        os.remove(django_path)
+                    except Exception:
+                        pass
+                
+                # Safe fallback for legacy paths
+                try:
+                    file_path = os.path.join(r"C:\Kuliah\UIUX\Backend\media", att.file.replace('/', '\\'))
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except Exception:
+                    pass
+                try:
+                    local_path = os.path.join(r"C:\Kuliah\project_besar4\media", att.file.replace('/', '\\'))
+                    if os.path.exists(local_path):
+                        os.remove(local_path)
+                except Exception:
+                    pass
+
                 att.delete()
                 # Also clear local evidence if name matches loosely
                 if c_status.evidence_file and att.original_name in c_status.evidence_file.name:
@@ -120,25 +136,39 @@ def issue_full_detail_page(request, issue_id):
             upload = request.FILES['evidence_file']
             c_status.evidence_file = upload
             
-            # Sync attachment to IntringPM
-            target_dir = r"C:\Kuliah\UIUX\Backend\media\evidence"
-            if not os.path.exists(target_dir):
-                os.makedirs(target_dir)
+            # Save file physically to current Django media
+            from django.conf import settings
+            target_dir = os.path.join(settings.MEDIA_ROOT, 'evidence')
+            os.makedirs(target_dir, exist_ok=True)
             
-            # Save file physically to IntringPM media
             timestamp = int(time.time())
             filename = f"{timestamp}_{upload.name}"
             target_path = os.path.join(target_dir, filename)
             
-            # Local target path
-            local_dir = r"C:\Kuliah\project_besar4\media\evidence"
-            os.makedirs(local_dir, exist_ok=True)
-            local_target_path = os.path.join(local_dir, filename)
-            
-            with open(target_path, 'wb+') as dest, open(local_target_path, 'wb+') as local_dest:
+            with open(target_path, 'wb+') as dest:
                 for chunk in upload.chunks():
                     dest.write(chunk)
-                    local_dest.write(chunk)
+            
+            # Safe sync to legacy directories if they exist
+            try:
+                legacy_dir_1 = r"C:\Kuliah\UIUX\Backend\media\evidence"
+                if os.path.exists(r"C:\Kuliah\UIUX\Backend"):
+                    os.makedirs(legacy_dir_1, exist_ok=True)
+                    with open(os.path.join(legacy_dir_1, filename), 'wb+') as dest1:
+                        for chunk in upload.chunks():
+                            dest1.write(chunk)
+            except Exception:
+                pass
+                
+            try:
+                legacy_dir_2 = r"C:\Kuliah\project_besar4\media\evidence"
+                if os.path.exists(r"C:\Kuliah\project_besar4"):
+                    os.makedirs(legacy_dir_2, exist_ok=True)
+                    with open(os.path.join(legacy_dir_2, filename), 'wb+') as dest2:
+                        for chunk in upload.chunks():
+                            dest2.write(chunk)
+            except Exception:
+                pass
                     
             # Insert to core_attachments
             UIUXAttachment.objects.using('uiux_db').create(

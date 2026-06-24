@@ -126,5 +126,8 @@ urlpatterns += [
     path('api/model/download/<str:job_id>', wizard_views.api_model_download, name='api_model_download'),
     path('api/draft/save', wizard_views.api_draft_save, name='api_draft_save'),
     path('api/draft/load/<str:submission_id>', wizard_views.api_draft_load, name='api_draft_load'),
+    path('api/dataset/load-submission/<int:submission_id>', wizard_views.api_dataset_load_submission, name='api_dataset_load_submission'),
+    path('api/dataset/download-processed/<str:dataset_id>', wizard_views.api_download_processed, name='api_dataset_download_processed'),
+    path('api/train/pdf-report/<str:job_id>', wizard_views.api_pdf_report, name='api_pdf_report'),
 ]
 

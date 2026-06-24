@@ -3934,14 +3934,155 @@
                         </div>
                     </div>
 
-                    <div class="pg-inbox-mini" id="g2-inbox-mini" style="max-height:300px; overflow-y:auto; padding:0px 5px; background:transparent; border:none;">
+                    <style>
+                        .g2-form-separator {
+                            border: 0;
+                            border-top: 1px solid rgba(255, 255, 255, 0.08);
+                            margin: 10px 0 15px 0;
+                        }
+                        .g2-form {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 12px;
+                        }
+                        .g2-form-group {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 5px;
+                        }
+                        .g2-form-label {
+                            font-size: 0.72rem;
+                            font-weight: 600;
+                            color: rgba(255, 255, 255, 0.6);
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                        }
+                        .g2-form-input, .g2-form-textarea, .g2-form-select {
+                            width: 100%;
+                            padding: 10px 14px;
+                            border-radius: 8px;
+                            background: #120e2a;
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            color: #fff;
+                            font-family: 'DM Sans', sans-serif;
+                            font-size: 0.85rem;
+                            transition: all 0.2s ease;
+                        }
+                        .g2-form-input:focus, .g2-form-textarea:focus, .g2-form-select:focus {
+                            outline: none;
+                            border-color: #6c35f0;
+                            box-shadow: 0 0 0 3px rgba(108, 53, 240, 0.25);
+                        }
+                        .g2-form-textarea {
+                            resize: vertical;
+                            min-height: 70px;
+                        }
+                        /* File indicator container */
+                        .g2-file-box {
+                            background: #120e2a;
+                            border: 1px dashed rgba(108, 53, 240, 0.4);
+                            border-radius: 10px;
+                            padding: 12px 14px;
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            margin-top: 4px;
+                            transition: all 0.25s ease;
+                        }
+                        .g2-file-box.has-file {
+                            border-color: rgba(108, 53, 240, 0.8);
+                            background: rgba(108, 53, 240, 0.08);
+                        }
+                        .g2-file-box-icon {
+                            font-size: 1.3rem;
+                            flex-shrink: 0;
+                        }
+                        .g2-file-box-text {
+                            flex: 1;
+                            overflow: hidden;
+                        }
+                        .g2-file-box-label {
+                            font-size: 0.68rem;
+                            font-weight: 600;
+                            color: rgba(255,255,255,0.45);
+                            text-transform: uppercase;
+                            letter-spacing: 0.05em;
+                            margin-bottom: 2px;
+                        }
+                        .g2-file-box-name {
+                            font-size: 0.82rem;
+                            color: rgba(255,255,255,0.5);
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            font-style: italic;
+                        }
+                        .g2-file-box-name.active {
+                            color: #c4b5fd;
+                            font-style: normal;
+                            font-weight: 500;
+                        }
+                        .g2-file-clear-btn {
+                            background: rgba(239, 68, 68, 0.15);
+                            border: 1px solid rgba(239, 68, 68, 0.3);
+                            border-radius: 6px;
+                            color: #fca5a5;
+                            font-size: 0.75rem;
+                            padding: 3px 8px;
+                            cursor: pointer;
+                            flex-shrink: 0;
+                            transition: all 0.2s ease;
+                        }
+                        .g2-file-clear-btn:hover {
+                            background: rgba(239, 68, 68, 0.3);
+                        }
+                    </style>
+
+                    <hr class="g2-form-separator">
+
+                    <form class="g2-form" onsubmit="event.preventDefault();" style="background: #1a1435; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="g2-form-group">
+                            <label class="g2-form-label">Judul</label>
+                            <input class="g2-form-input" type="text" placeholder="Contoh: Data Penjualan Q3 2026">
+                        </div>
+                        <div class="g2-form-group">
+                            <label class="g2-form-label">Deskripsi</label>
+                            <textarea class="g2-form-textarea" placeholder="Jelaskan kebutuhan data, kolom yang diperlukan, dan wilayah terkait..."></textarea>
+                        </div>
+                        <div class="g2-form-group">
+                            <label class="g2-form-label">Kontak</label>
+                            <input class="g2-form-input" type="email" placeholder="email@tim.com">
+                        </div>
+                        <div class="g2-form-group">
+                            <label class="g2-form-label">Urgensi</label>
+                            <select class="g2-form-select">
+                                <option value="high">High Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="low">Low Priority</option>
+                            </select>
+                        </div>
+                    </form>
+
+                    <!-- File untuk Diproses indicator -->
+                    <div class="g2-form-group" style="margin: 6px 0 0 0;">
+                        <label class="g2-form-label" style="font-size:0.68rem; color:rgba(255,255,255,0.45);">File untuk Diproses</label>
+                        <div class="g2-file-box" id="g2-file-box">
+                            <span class="g2-file-box-icon">📄</span>
+                            <div class="g2-file-box-text">
+                                <div class="g2-file-box-label">File terpilih</div>
+                                <div class="g2-file-box-name" id="g2-file-name">Belum ada file yang diunggah</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pg-inbox-mini" id="g2-inbox-mini" style="display:none;">
                         <div class="loading-dots"><span></span><span></span><span></span></div>
                     </div>
 
                     <div class="pg-actions">
                         <input type="file" id="g2-file-upload" style="display:none;" onchange="handleGrid2Upload(event)" />
                         <button class="pg-btn-secondary" onclick="document.getElementById('g2-file-upload').click()">📁 Unggah File</button>
-                        <button class="pg-btn-primary" id="g2-send-btn" onclick="openSendToGrid3Modal()" disabled>
+                        <button class="pg-btn-primary" id="g2-send-btn" onclick="handleG2SendBtn()" disabled>
                             Kirim ke Proses → <span class="pg-send-count" id="g2-send-count">0</span>
                         </button>
                     </div>
@@ -6254,53 +6395,159 @@
         await loadPipelineData();
     }
     
-    async function handleGrid2Upload(event) {
+    // State untuk file yang dipilih lewat form manual
+    let g2SelectedFile = null;
+
+    function handleGrid2Upload(event) {
         const file = event.target.files[0];
         if (!file) return;
-        
+        g2SelectedFile = file;
+        // Update file indicator box
+        const box = document.getElementById('g2-file-box');
+        const nameEl = document.getElementById('g2-file-name');
+        box.classList.add('has-file');
+        box.querySelector('.g2-file-box-icon').textContent = '📦';
+        nameEl.classList.add('active');
+        nameEl.textContent = file.name;
+        // Tambah tombol clear jika belum ada
+        if (!box.querySelector('.g2-file-clear-btn')) {
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'g2-file-clear-btn';
+            clearBtn.textContent = '✕ Hapus';
+            clearBtn.onclick = clearG2File;
+            box.appendChild(clearBtn);
+        }
+        updateG2SendBtnMode();
+        showToast('📎 File terpilih: ' + file.name, 'info');
+    }
+
+    function clearG2File() {
+        g2SelectedFile = null;
+        document.getElementById('g2-file-upload').value = '';
+        const box = document.getElementById('g2-file-box');
+        const nameEl = document.getElementById('g2-file-name');
+        box.classList.remove('has-file');
+        box.querySelector('.g2-file-box-icon').textContent = '📄';
+        nameEl.classList.remove('active');
+        nameEl.textContent = 'Belum ada file yang diunggah';
+        const clearBtn = box.querySelector('.g2-file-clear-btn');
+        if (clearBtn) clearBtn.remove();
+        updateG2SendBtnMode();
+    }
+
+    function updateG2SendBtnMode() {
+        const hasFile = g2SelectedFile !== null;
+        const hasSelected = pipelineState.grid1Selected.length > 0;
+        const btn = document.getElementById('g2-send-btn');
+        const countEl = document.getElementById('g2-send-count');
+        if (btn) {
+            if (hasFile) {
+                btn.disabled = false;
+                if (countEl) countEl.textContent = '1';
+            } else if (hasSelected) {
+                btn.disabled = false;
+                if (countEl) countEl.textContent = hasSelected;
+            } else {
+                btn.disabled = true;
+                if (countEl) countEl.textContent = '0';
+            }
+        }
+    }
+
+    function handleG2SendBtn() {
+        if (g2SelectedFile !== null) {
+            // Mode form manual: submit form + file
+            submitManualFormWeb();
+        } else if (pipelineState.grid1Selected.length > 0) {
+            // Mode pilih dari inbox
+            openSendToGrid3Modal();
+        }
+    }
+
+    async function submitManualFormWeb() {
+        if (!g2SelectedFile) { showToast('Pilih file terlebih dahulu', 'error'); return; }
+        const form = document.querySelector('.g2-form');
+        const inputs = form?.querySelectorAll('.g2-form-input, .g2-form-textarea, .g2-form-select') || [];
+        const judul   = inputs[0]?.value.trim() || g2SelectedFile.name;
+        const deskripsi = inputs[1]?.value.trim() || '';
+        const kontak  = inputs[2]?.value.trim() || '';
+        const urgensi = inputs[3]?.value || 'medium';
         const formData = new FormData();
-        formData.append('source_file', file);
-        formData.append('title', file.name);
-        formData.append('sender_name', document.getElementById('user-name').textContent.trim() || 'User');
+        formData.append('source_file', g2SelectedFile);
+        formData.append('title', judul);
+        formData.append('description', deskripsi);
+        formData.append('contact_email', kontak);
+        formData.append('urgency', urgensi);
+        formData.append('sender_name', document.getElementById('user-name')?.textContent.trim() || 'User');
         formData.append('sender_team', 'Manual Entry');
-        
         const csrfToken = getCookie('csrftoken');
-        
         try {
-            showToast('📤 Mengunggah file ke server...', 'info');
+            const btn = document.getElementById('g2-send-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Mengunggah...';
+            }
             const res = await fetch('/api/v2/submissions/', {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                },
+                headers: { 'X-CSRFToken': csrfToken },
                 body: formData
             });
             const data = await res.json();
             if (res.ok) {
-                showToast('✓ File berhasil diunggah: ' + file.name, 'success');
+                // Auto-approve ke Grid 3
+                const approveRes = await fetch(`/api/v2/submissions/${data.id}/approve_stage/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (approveRes.ok) {
+                    showToast('✓ Data berhasil dikirim ke Grid 3: ' + judul, 'success');
+                } else {
+                    showToast('✓ File diunggah. Proses ke Grid 3 manual.', 'info');
+                }
+                
+                // Restore button innerHTML BEFORE clearG2File/loadPipelineData so that g2-send-count exists
+                if (btn) {
+                    btn.innerHTML = 'Kirim ke Proses → <span class="pg-send-count" id="g2-send-count">0</span>';
+                }
+                
+                // Reset form & file
+                if (form) form.reset();
+                clearG2File();
                 await loadPipelineData();
             } else {
                 showToast('Gagal mengunggah: ' + (data.error || 'Terjadi kesalahan'), 'error');
             }
         } catch(e) {
-            showToast('Gagal mengunggah: ' + e.message, 'error');
+            showToast('Gagal: ' + e.message, 'error');
+        } finally {
+            const btn = document.getElementById('g2-send-btn');
+            if (btn) {
+                btn.innerHTML = 'Kirim ke Proses → <span class="pg-send-count" id="g2-send-count">0</span>';
+            }
+            updateG2SendBtnMode();
         }
-        event.target.value = '';
     }
 
     function updateGrid2Stats() {
         const subs = pipelineState.grid1Data;
-        document.getElementById('g2-total').textContent = subs.length;
-        document.getElementById('g2-pending').textContent = subs.filter(s => s.status === 'pending').length;
-        document.getElementById('g2-processed').textContent = pipelineState.grid2Queue.length + pipelineState.grid3Data.length + pipelineState.history.length;
+        const totalEl = document.getElementById('g2-total');
+        const pendingEl = document.getElementById('g2-pending');
+        const processedEl = document.getElementById('g2-processed');
+        if (totalEl) totalEl.textContent = subs.length;
+        if (pendingEl) pendingEl.textContent = subs.filter(s => s.status === 'pending').length;
+        if (processedEl) processedEl.textContent = pipelineState.grid2Queue.length + pipelineState.grid3Data.length + pipelineState.history.length;
     }
 
     function renderGrid2Mini(subs) {
         const c = document.getElementById('g2-inbox-mini');
+        if (!c) return;
         if (!subs || subs.length === 0) {
             c.innerHTML = '<div class="pg-queue-empty"><span>📭</span><p>Tidak ada data masuk</p></div>';
-            document.getElementById('g2-send-btn').disabled = true;
-            document.getElementById('g2-send-count').textContent = '0';
+            const btn = document.getElementById('g2-send-btn');
+            if (btn) btn.disabled = true;
+            const countEl = document.getElementById('g2-send-count');
+            if (countEl) countEl.textContent = '0';
             return;
         }
         c.innerHTML = subs.map(s => `
@@ -6333,9 +6580,7 @@
     }
 
     function updateGrid2SendBtn() {
-        const n = pipelineState.grid1Selected.length;
-        document.getElementById('g2-send-btn').disabled = n === 0;
-        document.getElementById('g2-send-count').textContent = n;
+        updateG2SendBtnMode();
     }
 
     function refreshGrid2() {
@@ -6664,54 +6909,8 @@
     }
 
     function getStageDefaults(modality, stage) {
-        const csvDefaults = [
-            { task_type: 'classification', suggested_target: 'target_status', ipo_input: 'Data Tabular (CSV). Dimensi: 5000 baris, 12 kolom.', ipo_process: 'Pembersihan data (handling missing value, scale numerical features), Train-test split (80/20), cross-validation.', ipo_output: 'Prediksi label kelas target secara presisi.' },
-            { quality_score: 95, target_column: 'target_status', columns_info: 'id int, umur int, pendapatan float, status_pernikahan string, target_status int' },
-            { rows_before: 5000, rows_after: 4850, cols_num: 3, cols_cat: 2, cols_dropped: 1, cols_card: 0, train_size: 3880, test_size: 970 },
-            { selected_model: 'Random Forest Classifier' },
-            { accuracy: 94.5, precision: 93.8, recall: 94.2, f1: 94.0 },
-            { refined_acc: 95.8, best_params: '{"n_estimators": 200, "max_depth": 15, "min_samples_split": 2}' },
-            { tech_summary: 'Model Random Forest Classifier berhasil dilatih pada data tabular dengan akurasi 95.8%. Model stabil dan siap deploy.' },
-            { mgmt_summary: 'Sistem berhasil menganalisis data penjualan dan siap memprediksi target dengan tingkat keakuratan 95.8%.', rec_1: 'Terapkan model untuk memfilter prospek pelanggan.', rec_2: 'Lakukan evaluasi berkala setiap bulan.', rec_3: 'Tambahkan lokasi geografis.' }
-        ];
-
-        const txtDefaults = [
-            { task_type: 'text_classification', suggested_target: 'sentiment', ipo_input: 'Data Unstructured Text (TXT). Berisi 2500 baris dokumen teks.', ipo_process: 'Text preprocessing (lowercasing, tokenization, TF-IDF vectorization), Naive Bayes classification.', ipo_output: 'Kategorisasi teks dan analisis sentimen (Positif/Negatif).' },
-            { quality_score: 92, target_column: 'sentiment', columns_info: 'text_content text, sentiment string' },
-            { rows_before: 2500, rows_after: 2480, cols_num: 0, cols_cat: 1, cols_dropped: 0, cols_card: 0, train_size: 1984, test_size: 496 },
-            { selected_model: 'Naive Bayes Classifier' },
-            { accuracy: 89.2, precision: 88.5, recall: 89.0, f1: 88.7 },
-            { refined_acc: 91.2, best_params: '{"alpha": 0.1, "fit_prior": true}' },
-            { tech_summary: 'Model Naive Bayes berhasil dioptimasi dengan akurasi akhir 91.2% untuk klasifikasi sentimen teks.' },
-            { mgmt_summary: 'Model klasifikasi teks siap memilah sentimen secara otomatis dengan keakuratan 91.2%.', rec_1: 'Gunakan model untuk memantau ulasan negatif.', rec_2: 'Tambahkan kamus stop-words bahasa Indonesia.', rec_3: 'Lakukan retraining berkala.' }
-        ];
-
-        const jsonDefaults = [
-            { task_type: 'regression', suggested_target: 'amount', ipo_input: 'Data Semi-Structured (JSON). Berisi 1500 baris log transaksi.', ipo_process: 'JSON normalization (flattening), scale features, Gradient Boosting regression.', ipo_output: 'Prediksi nilai nominal transaksi.' },
-            { quality_score: 96, target_column: 'amount', columns_info: 'transaction_id string, timestamp string, user.id int, amount float' },
-            { rows_before: 1500, rows_after: 1500, cols_num: 2, cols_cat: 2, cols_dropped: 0, cols_card: 0, train_size: 1200, test_size: 300 },
-            { selected_model: 'Gradient Boosting Regressor' },
-            { accuracy: 91.0, precision: 90.5, recall: 90.8, f1: 90.6 },
-            { refined_acc: 92.5, best_params: '{"learning_rate": 0.05, "n_estimators": 150, "max_depth": 5}' },
-            { tech_summary: 'Model Gradient Boosting Regressor berhasil dilatih dengan R2 score 0.925 pada data log JSON.', },
-            { mgmt_summary: 'Sistem nominal transaksi berhasil dikonfigurasi dengan tingkat keandalan 92.5%.', rec_1: 'Hubungkan model dengan sistem alert fraud deteksi dini.', rec_2: 'Optimalkan struktur flattening data JSON.', rec_3: 'Pantau perubahan pola nilai transaksi.' }
-        ];
-
-        const imageDefaults = [
-            { task_type: 'image_classification', suggested_target: 'label_gambar', ipo_input: 'Data Visual (Image). Dimensi: 3000 file gambar, 3 kelas (Apel, Jeruk, Pisang).', ipo_process: 'Pre-processing gambar (resize ke 224x224, normalisasi warna), transfer learning menggunakan arsitektur ResNet-50.', ipo_output: 'Prediksi label kategori objek di dalam gambar.' },
-            { quality_score: 97, target_column: 'label_gambar', columns_info: 'file_path string, label_gambar string' },
-            { rows_before: 3000, rows_after: 3000, cols_num: 0, cols_cat: 1, cols_dropped: 0, cols_card: 0, train_size: 2400, test_size: 600 },
-            { selected_model: 'Convolutional Neural Network (CNN)' },
-            { accuracy: 92.4, precision: 91.8, recall: 92.0, f1: 91.9 },
-            { refined_acc: 94.6, best_params: '{"learning_rate": 0.001, "batch_size": 32, "epochs": 15}' },
-            { tech_summary: 'Model Convolutional Neural Network (CNN - ResNet50) berhasil dilatih untuk klasifikasi gambar dengan tingkat akurasi final 94.6%.', },
-            { mgmt_summary: 'Sistem klasifikasi gambar siap memproses dan membedakan jenis buah dengan akurasi 94.6%.', rec_1: 'Gunakan model pada kamera pemilah otomatis di lapangan.', rec_2: 'Tambahkan variasi data gambar dengan pencahayaan yang berbeda.', rec_3: 'Retrain model secara otomatis jika mendeteksi buah jenis baru.' }
-        ];
-
-        if (modality === 'text' || modality === 'txt') return txtDefaults[stage] || {};
-        if (modality === 'image') return imageDefaults[stage] || {};
-        if (modality === 'json') return jsonDefaults[stage] || {};
-        return csvDefaults[stage] || {};
+        // Pure dari Grid 2 — tidak ada data demo atau default tambahan
+        return {};
     }
 
     function renderGrid2StageContent(index) {
@@ -7326,11 +7525,31 @@
         document.getElementById('g4-send-count').textContent = d.length;
     }
 
-    function openGrid4ChartForItem(idx) {
+    async function openGrid4ChartForItem(idx) {
         const d = pipelineState.grid3Data;
         if (!d || d.length === 0 || !d[idx]) { openGrid4Chart(); return; }
         const activeSub = d[idx];
         const pd = activeSub.pipeline_data || {};
+        
+        let jobId = null;
+        if (pd.stage_7 && pd.stage_7.job_id) {
+            jobId = pd.stage_7.job_id;
+        } else if (pd['7'] && pd['7'].job_id) {
+            jobId = pd['7'].job_id;
+        }
+        
+        if (jobId) {
+            try {
+                const response = await fetch(`/api/train/result/${jobId}`);
+                if (response.ok) {
+                    const result = await response.json();
+                    renderAutoMLDashboardModal(activeSub, result, jobId);
+                    return;
+                }
+            } catch (e) {
+                console.error("Failed to fetch AutoML result, falling back to data quality charts:", e);
+            }
+        }
         const s1 = pd.stage_1 || {};
         const s2 = pd.stage_2 || {};
         const s4 = pd.stage_4 || {};
@@ -7496,6 +7715,18 @@
         if (!d || d.length === 0 || !d[idx]) return;
         const activeSub = d[idx];
         const pd = activeSub.pipeline_data || {};
+        
+        let jobId = null;
+        if (pd.stage_7 && pd.stage_7.job_id) {
+            jobId = pd.stage_7.job_id;
+        } else if (pd['7'] && pd['7'].job_id) {
+            jobId = pd['7'].job_id;
+        }
+        
+        if (jobId) {
+            window.open(`/api/train/pdf-report/${jobId}`, '_blank');
+            return;
+        }
         const s1 = pd.stage_1 || {};
         const s2 = pd.stage_2 || {};
         const cleaning = s2.cleaning_report || {};
@@ -7689,6 +7920,237 @@
         printWin.document.close();
     }
 
+    function renderAutoMLDashboardModal(activeSub, result, jobId) {
+        const modalId = 'g4-chart-modal-' + jobId;
+        const existing = document.getElementById(modalId);
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = modalId;
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);z-index:10000;display:flex;justify-content:center;align-items:flex-start;padding:24px;overflow-y:auto;';
+        overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
+
+        const summary = result.model_summary || {};
+        const quality = result.data_quality_report || {};
+        const importances = result.feature_importances || [];
+        const isClassification = summary.problem_type === 'classification';
+        const isRegression = summary.problem_type === 'regression';
+        const isClustering = summary.problem_type === 'clustering';
+
+        let perfMetricLabel = "Accuracy";
+        let perfMetricVal = (result.accuracy || 0).toFixed(2) + "%";
+        let secMetricLabel = "Precision";
+        let secMetricVal = (result.precision || 0).toFixed(3);
+
+        if (isRegression) {
+            perfMetricLabel = "R-Squared (R²)";
+            perfMetricVal = result.advanced_eval && result.advanced_eval.r2_score !== undefined ? result.advanced_eval.r2_score.toFixed(3) : "N/A";
+            secMetricLabel = "Root Mean Squared Error (RMSE)";
+            secMetricVal = result.advanced_eval && result.advanced_eval.rmse !== undefined ? result.advanced_eval.rmse.toFixed(3) : "N/A";
+        } else if (isClustering) {
+            perfMetricLabel = "Silhouette Score";
+            perfMetricVal = result.advanced_eval && result.advanced_eval.silhouette_score !== undefined ? result.advanced_eval.silhouette_score.toFixed(3) : "N/A";
+            secMetricLabel = "Precision Equivalent";
+            secMetricVal = (result.precision || 0).toFixed(3);
+        }
+
+        const topFeature = importances.length > 0 ? importances[0].feature : "None";
+
+        overlay.innerHTML = `
+        <div style="background:#0d0d1e;width:100%;max-width:960px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);padding:36px;color:#fff;box-shadow:0 30px 80px rgba(0,0,0,0.6);position:relative;margin:auto;" onclick="event.stopPropagation()">
+            <button onclick="document.getElementById('${modalId}').remove()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#x2715;</button>
+            <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:6px;padding-right:40px;">📊 Dashboard AutoML Model: ${activeSub.title}</h2>
+            <p style="color:rgba(255,255,255,0.55);font-size:0.85rem;margin-bottom:28px;">Hasil Evaluasi Engine Training & Real-time Metrics</p>
+            
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;">
+                <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:14px;padding:16px;">
+                    <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">${perfMetricLabel}</div>
+                    <div style="font-size:1.8rem;font-weight:800;color:#c084fc;">${perfMetricVal}</div>
+                    <div style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin-top:4px;">Model Performance</div>
+                </div>
+                <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:14px;padding:16px;">
+                    <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">${secMetricLabel}</div>
+                    <div style="font-size:1.8rem;font-weight:800;color:#a5b4fc;">${secMetricVal}</div>
+                    <div style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin-top:4px;">Error / Secondary Metric</div>
+                </div>
+                <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:14px;padding:16px;">
+                    <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Training Time</div>
+                    <div style="font-size:1.8rem;font-weight:800;color:#fbbf24;">${(summary.training_time_sec || 0).toFixed(3)}s</div>
+                    <div style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin-top:4px;">Engine execution speed</div>
+                </div>
+                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;padding:16px;">
+                    <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Dataset Health</div>
+                    <div style="font-size:1.6rem;font-weight:800;color:#34d399;">${quality.health_rating || 'Good'}</div>
+                    <div style="font-size:0.72rem;color:rgba(255,255,255,0.45);margin-top:4px;">Score: ${quality.health_score || 100}/100</div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:20px;">
+                    <h3 style="font-size:0.9rem;font-weight:700;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px;color:#a5b4fc;">🔧 Model Overview</h3>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);">
+                        <span>Algorithm</span><strong>${summary.algorithm || 'N/A'}</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);">
+                        <span>Problem Type</span><strong>${(summary.problem_type || 'N/A').toUpperCase()}</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);">
+                        <span>Training Sample</span><strong>${summary.training_records || 0} rows</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;">
+                        <span>Top Feature Driver</span><strong>${topFeature}</strong>
+                    </div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:20px;">
+                    <h3 style="font-size:0.9rem;font-weight:700;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:8px;color:#34d399;">📈 Data Quality Report</h3>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);">
+                        <span>Total Records Ingested</span><strong>${quality.total_records || 0}</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);">
+                        <span>Missing Values</span><strong>${quality.missing_values_count || 0} (${quality.missing_values_pct || 0}%)</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);">
+                        <span>Duplicate Rows</span><strong>${quality.duplicate_rows_count || 0} (${quality.duplicate_rows_pct || 0}%)</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.8rem;">
+                        <span>Health Score</span><strong>${quality.health_score || 100} / 100</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:rgba(99,102,241,0.05);border-left:4px solid #6366f1;border-radius:0 12px 12px 0;padding:18px 24px;margin-bottom:28px;">
+                <strong style="color:#a5b4fc;font-size:0.9rem;display:block;margin-bottom:6px;">💡 AI Summary & Insights</strong>
+                <p style="margin:0;font-size:0.82rem;line-height:1.6;color:rgba(255,255,255,0.85);">${result.ai_insights || 'No AI insights available.'}</p>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:22px;">
+                    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;">Top Feature Importances</h3>
+                    <div style="height:220px;"><canvas id="g4-automl-bar-${jobId}"></canvas></div>
+                </div>
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:22px;">
+                    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;">
+                        ${isClassification ? 'ROC Evaluation Curve' : (isRegression ? 'Model Residual Plot' : 'Cluster Size Distribution')}
+                    </h3>
+                    <div style="height:220px;"><canvas id="g4-automl-eval-${jobId}"></canvas></div>
+                </div>
+            </div>
+
+            <div style="text-align:right;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);">
+                <button onclick="document.getElementById('${modalId}').remove()" style="padding:10px 26px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;">Tutup</button>
+            </div>
+        </div>`;
+
+        document.body.appendChild(overlay);
+
+        const gx = { ticks:{color:'rgba(255,255,255,0.5)',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'} };
+
+        const featLabels = importances.slice(0, 7).map(item => item.feature);
+        const featData = importances.slice(0, 7).map(item => item.importance);
+        new Chart(document.getElementById(`g4-automl-bar-${jobId}`), {
+            type: 'bar',
+            data: {
+                labels: featLabels,
+                datasets: [{
+                    label: 'Importance',
+                    data: featData,
+                    backgroundColor: 'rgba(168,85,247,0.8)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: gx, y: gx }
+            }
+        });
+
+        const evalCtx = document.getElementById(`g4-automl-eval-${jobId}`);
+        if (isClassification) {
+            const rocPoints = (result.advanced_eval || {}).roc_curve || [];
+            new Chart(evalCtx, {
+                type: 'line',
+                data: {
+                    labels: rocPoints.map(p => p.fpr.toFixed(2)),
+                    datasets: [
+                        {
+                            label: 'ROC Curve (AUC = ' + (result.advanced_eval || {}).auc_score + ')',
+                            data: rocPoints.map(p => p.tpr),
+                            borderColor: '#34d399',
+                            backgroundColor: 'rgba(52,211,153,0.12)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Random Guess',
+                            data: rocPoints.map(p => p.fpr),
+                            borderColor: 'rgba(255,255,255,0.2)',
+                            borderDash: [5, 5],
+                            fill: false,
+                            borderWidth: 1,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ...gx, title: { display: true, text: 'False Positive Rate', color: 'rgba(255,255,255,0.6)', font: { size: 9 } } },
+                        y: { ...gx, title: { display: true, text: 'True Positive Rate', color: 'rgba(255,255,255,0.6)', font: { size: 9 } }, min: 0, max: 1 }
+                    }
+                }
+            });
+        } else if (isRegression) {
+            const residuals = (result.advanced_eval || {}).residual_plot || [];
+            new Chart(evalCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Residuals (R² = ' + (result.advanced_eval || {}).r2_score + ')',
+                        data: residuals.map(p => ({ x: p.predicted, y: p.residual })),
+                        backgroundColor: '#fbbf24',
+                        borderColor: '#fbbf24',
+                        radius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ...gx, title: { display: true, text: 'Predicted Value', color: 'rgba(255,255,255,0.6)', font: { size: 9 } } },
+                        y: { ...gx, title: { display: true, text: 'Residual', color: 'rgba(255,255,255,0.6)', font: { size: 9 } } }
+                    }
+                }
+            });
+        } else if (isClustering) {
+            const dist = (result.advanced_eval || {}).cluster_distribution || [];
+            new Chart(evalCtx, {
+                type: 'bar',
+                data: {
+                    labels: dist.map(d => d.cluster),
+                    datasets: [{
+                        label: 'Record Count',
+                        data: dist.map(d => d.count),
+                        backgroundColor: '#a5b4fc',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: gx, y: gx }
+                }
+            });
+        }
+    }
+
     function openGrid4Chart() {
         const d = pipelineState.grid3Data;
         if (!d || d.length === 0) return;
@@ -7860,6 +8322,14 @@
         if (pipelineState.grid4Ready.length === 0) return;
         const targetId = pipelineState.grid4Ready[0].id;
         
+        const pd = pipelineState.grid4Ready[0].pipeline_data || {};
+        let jobId = null;
+        if (pd.stage_7 && pd.stage_7.job_id) {
+            jobId = pd.stage_7.job_id;
+        } else if (pd['7'] && pd['7'].job_id) {
+            jobId = pd['7'].job_id;
+        }
+        
         try {
             const csrfToken = getCookie('csrftoken');
             const res = await fetch(`/api/v2/submissions/${targetId}/`, {
@@ -7875,6 +8345,9 @@
             });
             if (res.ok) {
                 showToast(`🚀 Model berhasil dikirim ke Kelompok Implementasi!`, 'success');
+                if (jobId) {
+                    window.open(`/api/train/pdf-report/${jobId}`, '_blank');
+                }
                 closePipelineModal('pm-overlay-final');
                 await loadPipelineData();
             } else {

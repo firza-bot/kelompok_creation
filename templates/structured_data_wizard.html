@@ -3,14 +3,143 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Intelligence Creation — Structured Data</title>
     <!-- React CSS Bundle -->
-    <link rel="stylesheet" href="{% static 'wizard/main.css' %}">
+    <link rel="stylesheet" href="{% static 'wizard/main.css' %}?v={% now 'U' %}">
     <!-- Chart.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     <!-- BoxPlot plugin (must load AFTER Chart.js) -->
     <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot/build/index.umd.min.js"></script>
+
+    {% if is_mobile %}
+    <!-- ============================================================ -->
+    <!-- Mobile WebView Optimizations (only when platform=mobile)     -->
+    <!-- ============================================================ -->
+    <style>
+        /* Hapus semua scrollbar yang tidak perlu */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 4px; }
+
+        /* Wizard root memenuhi seluruh layar */
+        .wizard-root {
+            min-height: 100dvh !important;
+            width: 100vw !important;
+        }
+
+        /* Topbar lebih compact */
+        .wizard-topbar {
+            padding-inline: 12px !important;
+            padding-block: 8px !important;
+        }
+        .wizard-topbar .topbar-breadcrumb {
+            font-size: 0.75rem !important;
+        }
+
+        /* Wizard body dan main penuh */
+        .wizard-body {
+            overflow: auto !important;
+        }
+        .wizard-main {
+            width: 100% !important;
+        }
+
+        /* Card lebih ringkas */
+        .wizard-card {
+            margin: 8px !important;
+            border-radius: 10px !important;
+        }
+        .step-content {
+            padding: 14px !important;
+            gap: 16px !important;
+        }
+
+        /* Footer navigasi */
+        .wizard-footer {
+            padding-inline: 14px !important;
+            padding-block: 10px !important;
+        }
+
+        /* Sidebar step menjadi lebih kecil */
+        .wizard-sidebar {
+            width: 48px !important;
+            padding-inline: 6px !important;
+            padding-block: 12px !important;
+        }
+        .step-label { display: none !important; }
+        .step-circle { width: 28px !important; height: 28px !important; font-size: 0.7rem !important; }
+        .step-line { margin-block: 4px !important; height: 20px !important; }
+
+        /* Form inputs lebih besar untuk sentuhan */
+        .form-input, .form-select, .form-textarea, .form-select-sm {
+            font-size: 16px !important;
+            padding-block: 10px !important;
+        }
+
+        /* Tombol navigasi lebih tinggi */
+        .btn-nav, .btn-process, .btn-purple, .btn-action, .btn-outlined, .btn-danger {
+            min-height: 44px !important;
+            font-size: 14px !important;
+            padding-block: 10px !important;
+        }
+
+        /* Cards prob type fullwidth */
+        .radio-card-group { flex-direction: column !important; }
+        .radio-card { min-width: auto !important; }
+
+        /* Metric grid 2 kolom */
+        .metric-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+
+        /* Histogram pair stack */
+        .histogram-pair {
+            grid-template-columns: 1fr !important;
+        }
+
+        /* Chart responsive */
+        canvas {
+            max-width: 100% !important;
+        }
+        .chart-section, .histogram-item {
+            overflow-x: hidden !important;
+        }
+
+        /* Summary grid scroll horizontal */
+        .summary-grid {
+            overflow-x: auto !important;
+        }
+
+        /* Table scroll */
+        .table-scroll {
+            overflow-x: auto !important;
+        }
+
+        /* Data table ukuran kecil */
+        .data-table th, .data-table td {
+            padding-inline: 8px !important;
+            padding-block: 6px !important;
+            font-size: 0.65rem !important;
+        }
+
+        /* Training spinner center */
+        .training-pending {
+            padding-block: 40px !important;
+        }
+
+        /* Confusion matrix scroll */
+        .confusion-wrap {
+            overflow-x: auto !important;
+        }
+
+        /* Axis selector wrap */
+        .axis-selector-row {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+    </style>
+    {% endif %}
 </head>
 <body>
     <div id="root"></div>
@@ -20,9 +149,11 @@
         window.SUBMISSION_ID = "{{ submission_id }}";
         // Configure API URL base for Django hosted endpoints
         window.BACKEND_URL = "";
+        // Pass platform flag to React app
+        window.IS_MOBILE_WEBVIEW = {{ is_mobile|yesno:"true,false" }};
     </script>
 
     <!-- React JS Bundle -->
-    <script src="{% static 'wizard/main.js' %}"></script>
+    <script src="{% static 'wizard/main.js' %}?v={% now 'U' %}"></script>
 </body>
 </html>

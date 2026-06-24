@@ -111,8 +111,23 @@ def analyze_tabular(file_path, filename):
 
 def analyze_text(file_path, filename):
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read(5000) # Read up to 5k chars
+        if file_path.lower().endswith('.pdf'):
+            try:
+                import pypdf
+                reader = pypdf.PdfReader(file_path)
+                text_parts = []
+                for page in reader.pages:
+                    t = page.extract_text()
+                    if t:
+                        text_parts.append(t)
+                        if sum(len(x) for x in text_parts) >= 5000:
+                            break
+                content = "".join(text_parts)[:5000]
+            except Exception as e:
+                content = f"(Gagal membaca PDF: {str(e)})"
+        else:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read(5000) # Read up to 5k chars
             
         length = len(content)
         lines = content.split('\n')

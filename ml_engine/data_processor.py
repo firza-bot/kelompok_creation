@@ -34,7 +34,7 @@ def main():
             "data_shape": [1000, 3, 224, 224]
         })
         
-    if ext in ['.txt', '.md', '.log']:
+    if ext in ['.txt', '.md', '.log', '.pdf']:
         safe_json({
             "success": True,
             "message": "Data teks siap diproses.",

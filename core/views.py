@@ -856,7 +856,7 @@ def _detect_data_type_from_file(file_obj):
         return 'image'
     if ext in ['.csv', '.xlsx', '.xls', '.tsv']:
         return 'tabular'
-    if ext in ['.txt', '.md', '.json', '.xml']:
+    if ext in ['.txt', '.md', '.json', '.xml', '.pdf']:
         return 'text'
     if ext in ['.zip', '.tar', '.gz']:
         return 'mixed'
@@ -1061,7 +1061,12 @@ def data_entry_proses_page(request, submission_id):
         submission = IntelligenceSubmission.objects.get(pk=submission_id)
     except IntelligenceSubmission.DoesNotExist:
         return redirect('/dashboard')
-    return render(request, 'structured_data_wizard.html', {'submission_id': submission_id})
+    # Deteksi apakah request dari mobile WebView (parameter ?platform=mobile)
+    is_mobile = request.GET.get('platform', '').lower() == 'mobile'
+    return render(request, 'structured_data_wizard.html', {
+        'submission_id': submission_id,
+        'is_mobile': is_mobile,
+    })
 
 
 
@@ -1149,6 +1154,17 @@ def api_submissions_list(request):
             else:
                 time_relative = "baru saja"
             
+            file_path = ''
+            file_url = ''
+            try:
+                if sub.source_file:
+                    file_path = sub.source_file.path
+                    file_url = sub.source_file.url
+            except Exception:
+                if sub.source_file:
+                    file_path = sub.source_file.name
+                    file_url = getattr(sub.source_file, 'url', '')
+
             submissions_data.append({
                 'id': sub.id,
                 'title': getattr(sub, 'title', '') or 'Tanpa Judul',
@@ -1168,6 +1184,8 @@ def api_submissions_list(request):
                 'received_at': received_at.isoformat(),
                 'time_relative': time_relative,
                 'pipeline_data': getattr(sub, 'pipeline_data', {}) or {},
+                'file_path': file_path,
+                'file_url': file_url,
             })
         
         # Stats

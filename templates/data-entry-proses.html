@@ -703,31 +703,10 @@
         }
 
         function getStageDefaults(modality, stage) {
-            const csvDefaults = [
-                { task_type: 'classification', suggested_target: 'target_status', ipo_input: 'Data Tabular (CSV). Dimensi: 5000 baris, 12 kolom.', ipo_process: 'Pembersihan data (missing value, scaling), Train-test split (80/20).', ipo_output: 'Prediksi label kelas target secara presisi.' },
-                { quality_score: 95, target_column: 'target_status', columns_info: 'id int, umur int, pendapatan float, status string, target_status int' },
-                { rows_before: 5000, rows_after: 4850, cols_num: 3, cols_cat: 2, cols_dropped: 1, cols_card: 0, train_size: 3880, test_size: 970 },
-                { selected_model: 'Random Forest Classifier' },
-                { accuracy: 94.5, precision: 93.8, recall: 94.2, f1: 94.0 },
-                { refined_acc: 95.8, best_params: '{"n_estimators": 200, "max_depth": 15}' },
-                { tech_summary: 'Model Random Forest Classifier berhasil dilatih pada data tabular dengan akurasi 95.8%.' },
-                { mgmt_summary: 'Sistem berhasil menganalisis data penjualan dan siap memprediksi dengan akurasi 95.8%.', rec_1: 'Terapkan model untuk memfilter prospek pelanggan.', rec_2: 'Lakukan evaluasi berkala setiap bulan.', rec_3: 'Tambahkan lokasi geografis.' }
-            ];
-
-            const txtDefaults = [
-                { task_type: 'text_classification', suggested_target: 'sentiment', ipo_input: 'Data Unstructured Text (TXT). Berisi 2500 baris dokumen teks.', ipo_process: 'Text preprocessing (lowercasing, TF-IDF vectorization), Naive Bayes.', ipo_output: 'Kategorisasi teks sentimen (Positif/Negatif).' },
-                { quality_score: 92, target_column: 'sentiment', columns_info: 'text_content text, sentiment string' },
-                { rows_before: 2500, rows_after: 2480, cols_num: 0, cols_cat: 1, cols_dropped: 0, cols_card: 0, train_size: 1984, test_size: 496 },
-                { selected_model: 'Naive Bayes Classifier' },
-                { accuracy: 89.2, precision: 88.5, recall: 89.0, f1: 88.7 },
-                { refined_acc: 91.2, best_params: '{"alpha": 0.1}' },
-                { tech_summary: 'Model Naive Bayes berhasil dioptimasi dengan akurasi akhir 91.2%.' },
-                { mgmt_summary: 'Model klasifikasi teks siap memilah sentimen dengan keakuratan 91.2%.', rec_1: 'Gunakan model untuk memantau ulasan negatif.', rec_2: 'Tambahkan kamus stop-words Indonesia.', rec_3: 'Retrain berkala.' }
-            ];
-
-            if (modality === 'text' || modality === 'txt') return txtDefaults[stage] || {};
-            return csvDefaults[stage] || {};
+            // Pure dari Grid 2 — tidak ada data demo atau default tambahan
+            return {};
         }
+
 
         function renderGrid2StageContent(index) {
             const container = document.getElementById('g2-stage-dynamic-content');
@@ -965,6 +944,113 @@
             }
         }
 
+        function isGibberish(text) {
+            if (!text) return false;
+            const cleaned = text.trim().toLowerCase();
+            if (cleaned.length < 3) return true; // Terlalu pendek
+            
+            // 1. Deteksi perulangan karakter berurutan (misal: aaaaa, qqqq)
+            if (/(.)\1{3,}/.test(cleaned)) return true;
+            
+            // 2. Deteksi perulangan pola pendek (misal: qsqsqs, asdasd, 123123)
+            if (cleaned.length >= 4) {
+                for (let len = 2; len <= 4; len++) {
+                    const chunk = cleaned.substring(0, len);
+                    let count = 0;
+                    let idx = 0;
+                    while ((idx = cleaned.indexOf(chunk, idx)) !== -1) {
+                        count++;
+                        idx += len;
+                    }
+                    if (count > 2 && (count * len) >= cleaned.length - 2) {
+                        return true;
+                    }
+                }
+            }
+
+            // 3. Keyboard spam baris atas/tengah
+            const spams = ['asdf', 'sdfg', 'dfgh', 'fghj', 'ghjk', 'hjkl', 'qwer', 'wert', 'erty', 'rtyu', 'tyui', 'yuio', 'uiop', 'zxcv', 'xcvb', 'cvbn', 'vbnm'];
+            for (const spam of spams) {
+                if (cleaned.includes(spam)) return true;
+            }
+
+            // 4. Vokal/konsonan tidak seimbang
+            const vowels = (cleaned.match(/[aeiou]/g) || []).length;
+            const consonants = (cleaned.match(/[bcdfghjklmnpqrstvwxyz]/g) || []).length;
+            if (cleaned.length >= 6) {
+                if (vowels === 0 || consonants === 0) return true;
+                if (vowels / cleaned.length < 0.15) return true;
+            }
+
+            return false;
+        }
+
+        function validateManualStageData(index, modality) {
+            if (index === 0) {
+                const target = document.getElementById('stage0-suggested-target').value.trim();
+                const ipoInput = document.getElementById('stage0-ipo-input').value.trim();
+                const ipoProcess = document.getElementById('stage0-ipo-process').value.trim();
+                const ipoOutput = document.getElementById('stage0-ipo-output').value.trim();
+
+                if (!target || isGibberish(target)) return "Kolom Target tidak valid atau terdeteksi asal-asalan!";
+                if (!ipoInput || isGibberish(ipoInput)) return "Input IPO tidak valid atau terdeteksi asal-asalan!";
+                if (!ipoProcess || isGibberish(ipoProcess)) return "Process IPO tidak valid atau terdeteksi asal-asalan!";
+                if (!ipoOutput || isGibberish(ipoOutput)) return "Output IPO tidak valid atau terdeteksi asal-asalan!";
+            } else if (index === 1) {
+                const target = document.getElementById('stage1-target-column').value.trim();
+                const qualityScore = parseFloat(document.getElementById('stage1-quality-score').value);
+                const colsInfo = document.getElementById('stage1-columns-info').value.trim();
+
+                if (!target || isGibberish(target)) return "Kolom Target tidak valid atau terdeteksi asal-asalan!";
+                if (isNaN(qualityScore) || qualityScore < 0 || qualityScore > 100) return "Quality Score harus bernilai 0 - 100!";
+                if (!colsInfo || isGibberish(colsInfo)) return "Daftar Kolom tidak valid atau terdeteksi asal-asalan!";
+            } else if (index === 2) {
+                const rowsBefore = parseInt(document.getElementById('stage2-rows-before').value);
+                const rowsAfter = parseInt(document.getElementById('stage2-rows-after').value);
+                const trainSize = parseInt(document.getElementById('stage2-train-size').value);
+                const testSize = parseInt(document.getElementById('stage2-test-size').value);
+
+                if (isNaN(rowsBefore) || rowsBefore <= 0) return "Jumlah baris sebelum harus lebih besar dari 0!";
+                if (isNaN(rowsAfter) || rowsAfter <= 0) return "Jumlah baris setelah harus lebih besar dari 0!";
+                if (rowsAfter > rowsBefore) return "Jumlah baris setelah pembersihan tidak boleh melebihi baris sebelum!";
+                if (isNaN(trainSize) || trainSize <= 0) return "Train size tidak boleh kosong atau <= 0!";
+                if (isNaN(testSize) || testSize <= 0) return "Test size tidak boleh kosong atau <= 0!";
+            } else if (index === 4) {
+                const acc = parseFloat(document.getElementById('stage4-accuracy').value);
+                const prec = parseFloat(document.getElementById('stage4-precision').value);
+                const rec = parseFloat(document.getElementById('stage4-recall').value);
+                const f1 = parseFloat(document.getElementById('stage4-f1').value);
+
+                if (isNaN(acc) || acc <= 0 || acc > 100) return "Akurasi harus bernilai antara 0.1% - 100%!";
+                if (isNaN(prec) || prec <= 0 || prec > 100) return "Precision harus bernilai antara 0.1% - 100%!";
+                if (isNaN(rec) || rec <= 0 || rec > 100) return "Recall harus bernilai antara 0.1% - 100%!";
+                if (isNaN(f1) || f1 <= 0 || f1 > 100) return "F1-Score harus bernilai antara 0.1% - 100%!";
+            } else if (index === 5) {
+                const refinedAcc = parseFloat(document.getElementById('stage5-refined-acc').value);
+                const bestParams = document.getElementById('stage5-best-params').value.trim();
+
+                if (isNaN(refinedAcc) || refinedAcc <= 0 || refinedAcc > 100) return "Refined Accuracy harus bernilai antara 0.1% - 100%!";
+                if (bestParams) {
+                    try {
+                        JSON.parse(bestParams);
+                    } catch (e) {
+                        return "Format Best Hyperparameters tidak valid (harus format JSON valid seperti {\"n_estimators\": 100})!";
+                    }
+                }
+            } else if (index === 6) {
+                const summary = document.getElementById('stage6-tech-summary').value.trim();
+                if (!summary || summary.length < 10 || isGibberish(summary)) {
+                    return "Summary teknis terlalu pendek atau terdeteksi asal-asalan (minimal 10 karakter)!";
+                }
+            } else if (index === 7) {
+                const summary = document.getElementById('stage7-mgmt-summary').value.trim();
+                if (!summary || summary.length < 10 || isGibberish(summary)) {
+                    return "Summary management terlalu pendek atau terdeteksi asal-asalan (minimal 10 karakter)!";
+                }
+            }
+            return null;
+        }
+
         async function saveManualStage(index) {
             if (!activeSubmissionId) return;
 
@@ -972,6 +1058,14 @@
             if (!activeSub) return;
 
             const modality = activeSub.detected_data_type || activeSub.data_type || 'csv';
+
+            // Jalankan validasi input terlebih dahulu
+            const validationError = validateManualStageData(index, modality);
+            if (validationError) {
+                showToast('🔒 Keamanan Input: ' + validationError, 'error');
+                return;
+            }
+
             const body = {
                 stage_index: index,
                 stage_data: {}

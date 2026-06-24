@@ -54,7 +54,7 @@ def recommend_models(file_path, target_col):
             "target_column": "class",
             "recommendations": results
         }
-    elif ext in ['.txt', '.md', '.log']:
+    elif ext in ['.txt', '.md', '.log', '.pdf']:
         results = [
             {"model_name": "BiLSTM", "score": 0.85, "metric": "accuracy", "description": "Memahami konteks urutan kata secara bidirectional menggunakan Embedding layer."},
             {"model_name": "CNN-Text", "score": 0.83, "metric": "accuracy", "description": "Menggunakan konvolusi 1D untuk pencarian n-gram teks secara cepat dan efisien."},

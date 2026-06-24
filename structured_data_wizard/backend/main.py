@@ -590,6 +590,7 @@ def run_training_pipeline(job_id: str, config: Dict[str, Any]):
             pickle.dump(model_package, f)
             
         # Complete Job
+        results["feature_descriptions"] = config.get("feature_descriptions", {})
         training_jobs[job_id]["status"] = "complete"
         training_jobs[job_id]["progress"] = 100
         training_jobs[job_id]["result"] = results
