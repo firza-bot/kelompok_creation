@@ -3,6 +3,9 @@ version: '3.8'
 services:
   web:
     build: .
+    container_name: kelompok_creation_web_1
+    ports:
+      - "8000:8000"
     volumes:
       - static_volume_v3:/app/staticfiles
       - media_volume_v3:/app/mediafiles
@@ -16,13 +19,13 @@ services:
         aliases:
           - django_backend
       global_gateway_net:
+        aliases:
+          - kelompok_creation_web_1
 
   nginx:
     image: nginx:alpine
     container_name: creation_nginx
     restart: always
-    ports:
-      - "8000:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - static_volume_v3:/app/staticfiles
