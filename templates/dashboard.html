@@ -6544,10 +6544,7 @@
         if (!c) return;
         if (!subs || subs.length === 0) {
             c.innerHTML = '<div class="pg-queue-empty"><span>📭</span><p>Tidak ada data masuk</p></div>';
-            const btn = document.getElementById('g2-send-btn');
-            if (btn) btn.disabled = true;
-            const countEl = document.getElementById('g2-send-count');
-            if (countEl) countEl.textContent = '0';
+            updateG2SendBtnMode();
             return;
         }
         c.innerHTML = subs.map(s => `
