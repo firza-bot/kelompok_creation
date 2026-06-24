@@ -8,7 +8,6 @@ import os
 INTRING_API_URL = os.environ.get('INTRING_API_URL', 'http://72.61.215.222/intelligence-engineering/api')
 INTRING_SECRET = 'INTRING_SECRET_123'
 
-@login_required
 def api_get_projects(request):
     try:
         response = requests.get(f"{INTRING_API_URL}/integration/ic-projects", params={'token': INTRING_SECRET}, timeout=5)
@@ -17,7 +16,6 @@ def api_get_projects(request):
     except Exception as e:
         return JsonResponse([], safe=False)
 
-@login_required
 def api_get_issues(request, project_id):
     try:
         response = requests.get(f"{INTRING_API_URL}/integration/ic-projects", params={'token': INTRING_SECRET}, timeout=5)
