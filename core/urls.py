@@ -131,3 +131,12 @@ urlpatterns += [
     path('api/train/pdf-report/<str:job_id>', wizard_views.api_pdf_report, name='api_pdf_report'),
 ]
 
+# =====================================================================
+# GRID 6: MAINTENANCE NOTES — Realtime Polling Endpoints
+# =====================================================================
+urlpatterns += [
+    path('api/maintenance-notes/',               views.api_maintenance_notes_list,   name='api_maintenance_notes_list'),
+    path('api/maintenance-notes/<int:note_id>/', views.api_maintenance_note_delete,  name='api_maintenance_note_delete'),
+    path('api/maintenance-notes/clear/',         views.api_maintenance_notes_clear,  name='api_maintenance_notes_clear'),
+]
+

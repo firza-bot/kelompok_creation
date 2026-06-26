@@ -10,7 +10,8 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .models import (User, DataEntry, Analysis, AIModel, Visualization, 
-                     TrainingSession, Workflow, Collaboration, Insight, Dataset)
+                     TrainingSession, Workflow, Collaboration, Insight, Dataset,
+                     MaintenanceNote)
 from django.utils import timezone
 
 from rest_framework.response import Response
@@ -1288,3 +1289,77 @@ def api_submission_stage_update(request, submission_id):
         'pipeline_data': submission.pipeline_data
     })
 
+
+# =====================================================================
+# GRID 6: MAINTENANCE NOTES — Realtime Polling API
+# =====================================================================
+@login_required
+def api_maintenance_notes_list(request):
+    """GET: Ambil semua catatan terbaru (untuk polling).
+       POST: Simpan catatan baru."""
+    if request.method == 'GET':
+        since_id = request.GET.get('since_id', 0)
+        notes = MaintenanceNote.objects.filter(id__gt=since_id).select_related('user')[:50]
+        data = []
+        for n in notes:
+            data.append({
+                'id':         n.id,
+                'text':       n.text,
+                'priority':   n.priority,
+                'author':     n.user.get_full_name() or n.user.username if n.user else 'User',
+                'created_at': n.created_at.strftime('%d %b %Y, %H:%M'),
+            })
+        # Kirim juga ID tertinggi agar client tahu sampai mana
+        latest_id = MaintenanceNote.objects.order_by('-id').values_list('id', flat=True).first() or 0
+        return JsonResponse({'notes': data, 'latest_id': latest_id})
+
+    if request.method == 'POST':
+        try:
+            body = json.loads(request.body)
+        except Exception:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        text     = body.get('text', '').strip()
+        priority = body.get('priority', 'medium')
+
+        if not text:
+            return JsonResponse({'error': 'Teks catatan tidak boleh kosong'}, status=400)
+        if priority not in ('high', 'medium', 'low'):
+            priority = 'medium'
+
+        note = MaintenanceNote.objects.create(
+            user=request.user,
+            text=text,
+            priority=priority,
+        )
+        return JsonResponse({
+            'id':         note.id,
+            'text':       note.text,
+            'priority':   note.priority,
+            'author':     request.user.get_full_name() or request.user.username,
+            'created_at': note.created_at.strftime('%d %b %Y, %H:%M'),
+        }, status=201)
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required
+def api_maintenance_note_delete(request, note_id):
+    """DELETE: Hapus satu catatan berdasarkan ID."""
+    if request.method == 'DELETE':
+        try:
+            note = MaintenanceNote.objects.get(id=note_id)
+            note.delete()
+            return JsonResponse({'success': True})
+        except MaintenanceNote.DoesNotExist:
+            return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required  
+def api_maintenance_notes_clear(request):
+    """DELETE: Hapus semua catatan."""
+    if request.method == 'DELETE':
+        MaintenanceNote.objects.all().delete()
+        return JsonResponse({'success': True, 'message': 'Semua catatan dihapus'})
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

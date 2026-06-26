@@ -334,3 +334,24 @@ class OrchestrationPhase(models.Model):
     end_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+# =====================================================================
+# GRID 6: MAINTENANCE NOTE (Realtime via Polling)
+# =====================================================================
+class MaintenanceNote(models.Model):
+    PRIORITY_CHOICES = [
+        ('high',   'High Priority'),
+        ('medium', 'Medium Priority'),
+        ('low',    'Low Priority'),
+    ]
+    user        = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    text        = models.TextField()
+    priority    = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.priority}] {self.text[:40]}"
+

@@ -8888,29 +8888,77 @@
     });
 
     // =====================================================================
-    // GRID 5: MAINTENANCE NOTES
+    // GRID 6: MAINTENANCE NOTES — Realtime Polling (setiap 3 detik)
     // =====================================================================
     let maintenanceNotes = [];
+    let g6LatestId = 0;        // ID tertinggi yang sudah kita ketahui
+    let g6PollingTimer = null;
+    let g6IsSaving = false;
 
-    function initMaintenanceNotes() {
-        try { const s = localStorage.getItem('ic_maintenance_notes'); if (s) maintenanceNotes = JSON.parse(s); } catch(e) {}
-        renderNotes();
+    // --- Init: load semua catatan lalu mulai polling ---
+    async function initMaintenanceNotes() {
+        await fetchAllNotes();
+        startNotesPolling();
     }
 
+    // --- Ambil SEMUA catatan dari server (pertama kali) ---
+    async function fetchAllNotes() {
+        try {
+            const res = await fetch('/api/maintenance-notes/');
+            if (!res.ok) return;
+            const data = await res.json();
+            maintenanceNotes = data.notes || [];
+            g6LatestId = data.latest_id || 0;
+            renderNotes();
+        } catch(e) {
+            // Server tidak tersedia, tampilkan kosong
+            renderNotes();
+        }
+    }
+
+    // --- Polling: cek catatan BARU sejak g6LatestId ---
+    function startNotesPolling() {
+        if (g6PollingTimer) clearInterval(g6PollingTimer);
+        g6PollingTimer = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/maintenance-notes/?since_id=${g6LatestId}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.notes && data.notes.length > 0) {
+                    // Ada catatan baru! Tambahkan ke depan array
+                    maintenanceNotes = [...data.notes, ...maintenanceNotes];
+                    g6LatestId = data.latest_id;
+                    renderNotes();
+                    // Animasi highlight catatan baru
+                    const firstItem = document.querySelector('#note-list .ig-note-item');
+                    if (firstItem) {
+                        firstItem.style.transition = 'background 0.5s';
+                        firstItem.style.background = 'rgba(124,58,237,0.25)';
+                        setTimeout(() => { firstItem.style.background = ''; }, 2000);
+                    }
+                }
+                // Update latest_id even if no new notes
+                if (data.latest_id) g6LatestId = data.latest_id;
+            } catch(e) { /* server mungkin sedang down, lanjutkan */ }
+        }, 3000); // polling tiap 3 detik
+    }
+
+    // --- Render catatan ke DOM ---
     function renderNotes() {
-        const list = document.getElementById('note-list');
+        const list  = document.getElementById('note-list');
         const count = document.getElementById('note-count');
+        if (!list || !count) return;
         count.textContent = maintenanceNotes.length + ' catatan';
         if (maintenanceNotes.length === 0) {
             list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);"><div style="font-size:1.8rem;margin-bottom:8px;opacity:0.4">📝</div><p style="font-size:0.82rem;">Belum ada catatan maintenance</p></div>`;
             return;
         }
-        list.innerHTML = maintenanceNotes.map((n, i) => `
-            <div class="ig-note-item priority-${n.priority}">
+        list.innerHTML = maintenanceNotes.map((n) => `
+            <div class="ig-note-item priority-${n.priority}" id="note-item-${n.id}">
                 <div class="ig-note-text">${n.text.replace(/</g,'&lt;')}</div>
                 <div class="ig-note-meta">
-                    <span>${n.priority==='high'?'🔴 High':n.priority==='medium'?'🟡 Medium':'🟢 Low'} · ${n.time}</span>
-                    <button class="ig-note-delete" onclick="deleteNote(${i})">🗑️</button>
+                    <span>${n.priority==='high'?'🔴 High':n.priority==='medium'?'🟡 Medium':'🟢 Low'} · ${n.created_at} · <strong>${n.author}</strong></span>
+                    <button class="ig-note-delete" onclick="deleteNote(${n.id})">🗑️</button>
                 </div>
             </div>`).join('');
     }
@@ -8927,26 +8975,82 @@
         document.getElementById('note-textarea').value = '';
     }
 
-    function saveNote() {
-        const text = document.getElementById('note-textarea').value.trim();
+    // --- Simpan catatan baru ke server ---
+    async function saveNote() {
+        if (g6IsSaving) return;
+        const text     = document.getElementById('note-textarea').value.trim();
+        const priority = document.getElementById('note-priority').value;
         if (!text) { showToast('Tulis catatan terlebih dahulu', 'error'); return; }
-        maintenanceNotes.unshift({ text, priority: document.getElementById('note-priority').value, time: new Date().toLocaleString('id-ID') });
-        try { localStorage.setItem('ic_maintenance_notes', JSON.stringify(maintenanceNotes)); } catch(e) {}
-        cancelNote(); renderNotes(); showToast('Catatan disimpan!', 'success');
+
+        g6IsSaving = true;
+        const saveBtn = document.querySelector('#note-form .pg-btn-primary');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ Menyimpan...'; }
+
+        try {
+            const csrfToken = getCookie('csrftoken') || '';
+            const res = await fetch('/api/maintenance-notes/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ text, priority })
+            });
+            if (res.ok) {
+                const newNote = await res.json();
+                maintenanceNotes.unshift(newNote);
+                g6LatestId = newNote.id;
+                cancelNote();
+                renderNotes();
+                showToast('✓ Catatan disimpan dan dikirim ke semua pengguna!', 'success');
+            } else {
+                showToast('Gagal menyimpan catatan', 'error');
+            }
+        } catch(e) {
+            showToast('Gagal terhubung ke server: ' + e.message, 'error');
+        } finally {
+            g6IsSaving = false;
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Simpan'; }
+        }
     }
 
-    function deleteNote(idx) {
-        maintenanceNotes.splice(idx, 1);
-        try { localStorage.setItem('ic_maintenance_notes', JSON.stringify(maintenanceNotes)); } catch(e) {}
-        renderNotes();
+    // --- Hapus satu catatan ---
+    async function deleteNote(noteId) {
+        const csrfToken = getCookie('csrftoken') || '';
+        try {
+            const res = await fetch(`/api/maintenance-notes/${noteId}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            if (res.ok) {
+                maintenanceNotes = maintenanceNotes.filter(n => n.id !== noteId);
+                renderNotes();
+                showToast('Catatan dihapus', 'info');
+            } else {
+                showToast('Gagal menghapus catatan', 'error');
+            }
+        } catch(e) {
+            showToast('Gagal terhubung ke server', 'error');
+        }
     }
 
-    function clearAllNotes() {
+    // --- Hapus semua catatan ---
+    async function clearAllNotes() {
         if (maintenanceNotes.length === 0) return;
-        if (confirm('Hapus semua catatan?')) {
-            maintenanceNotes = [];
-            try { localStorage.removeItem('ic_maintenance_notes'); } catch(e) {}
-            renderNotes(); showToast('Semua catatan dihapus', 'success');
+        if (!confirm('Hapus semua catatan? Tindakan ini tidak bisa dibatalkan.')) return;
+        const csrfToken = getCookie('csrftoken') || '';
+        try {
+            const res = await fetch('/api/maintenance-notes/clear/', {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            if (res.ok) {
+                maintenanceNotes = [];
+                g6LatestId = 0;
+                renderNotes();
+                showToast('✓ Semua catatan dihapus', 'success');
+            } else {
+                showToast('Gagal menghapus semua catatan', 'error');
+            }
+        } catch(e) {
+            showToast('Gagal terhubung ke server', 'error');
         }
     }
 
