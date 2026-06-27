@@ -11,6 +11,7 @@ services:
       - static_volume_v3:/app/staticfiles
       - media_volume_v3:/app/mediafiles
       - ./db.sqlite3:/app/db.sqlite3
+      - ./wizard_storage:/app/wizard_storage
     environment:
       - DEBUG=0
       - SECRET_KEY=ganti_dengan_key_produksi_anda
