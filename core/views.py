@@ -1170,6 +1170,7 @@ def api_submissions_list(request):
                 'id': sub.id,
                 'title': getattr(sub, 'title', '') or 'Tanpa Judul',
                 'sender_name': getattr(sub, 'sender_name', '') or 'Anonymous',
+                'sender_team': getattr(sub, 'sender_team', '') or '',
                 'sender_email': getattr(sub, 'sender_email', '') or '',
                 'description': getattr(sub, 'description', '') or '',
                 'source': source,
