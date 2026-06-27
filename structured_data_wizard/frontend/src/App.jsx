@@ -2393,7 +2393,7 @@ export default function App() {
         <div className="topbar-actions">
           <button className="btn-outlined" onClick={handleSaveDraft}>Save Draft</button>
           <button className="btn-purple">API Documentation</button>
-          <button className="btn-danger" onClick={() => window.location.href = '/dashboard'}>Back to Project</button>
+          <button className="btn-danger" onClick={() => window.location.href = `${BACKEND_URL}/dashboard`}>Back to Project</button>
         </div>
       </div>
 
