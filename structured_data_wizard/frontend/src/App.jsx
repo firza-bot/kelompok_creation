@@ -2227,7 +2227,7 @@ export default function App() {
     }
     
     // 3. Redirect back to the project list
-    window.location.href = '/dashboard';
+    window.location.href = `${BACKEND_URL}/dashboard`;
   };
 
   // ── Trigger training when entering step 5 ────
