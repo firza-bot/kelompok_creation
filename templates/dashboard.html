@@ -6590,14 +6590,48 @@
         }
     }
 
-    function handleG2RequestBtn() {
+    async function handleG2RequestBtn() {
         const titleVal = document.getElementById('g2-form-title')?.value.trim() || 'Data Requirement';
+        const descVal = document.getElementById('g2-form-desc')?.value.trim() || '';
+        const contactVal = document.getElementById('g2-form-contact')?.value.trim() || '';
+        const minRowVal = document.getElementById('g2-form-minrow')?.value.trim() || '';
+        const reqColsVal = document.getElementById('g2-form-reqcols')?.value.trim() || '';
+        
+        if (!activeSubmissionId) {
+            showToast('Pilih submission yang aktif terlebih dahulu!', 'error');
+            return;
+        }
+
         showToast(`Meneruskan Request '${titleVal}' ke Tim Dataset...`, 'info');
         
-        // Simulasi pengiriman request ke Tim Dataset
-        setTimeout(() => {
-            showToast('✓ Request requirement berhasil dikirim ke Tim Dataset!', 'success');
-        }, 1500);
+        try {
+            const payload = {
+                title: titleVal,
+                description: descVal,
+                contact: contactVal,
+                min_rows: minRowVal,
+                required_columns: reqColsVal,
+                submission_id: activeSubmissionId
+            };
+
+            const res = await fetch('/dataset/api/requests/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showToast('✓ Request requirement berhasil dikirim ke Tim Dataset!', 'success');
+            } else {
+                showToast('Gagal mengirim request ke Tim Dataset: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (err) {
+            console.error('Error Dataset Request:', err);
+            showToast('Terjadi kesalahan saat menghubungi server Dataset.', 'error');
+        }
     }
 
     async function submitManualFormWeb() {
