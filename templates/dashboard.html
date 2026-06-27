@@ -6687,13 +6687,13 @@
             const payload = {
                 title: titleVal,
                 description: descVal,
-                contact: contactVal,
-                min_rows: minRowVal,
-                required_columns: reqColsVal,
-                submission_id: activeSubmissionId
+                ic_contact_email: contactVal,
+                urgency: document.getElementById('g2-form-urgency')?.value || 'MEDIUM',
+                min_rows: minRowVal ? parseInt(minRowVal) : null,
+                required_columns: reqColsVal
             };
 
-            const res = await fetch('/dataset/api/requests/create/', {
+            const res = await fetch('/dataset/api/requests/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -6701,11 +6701,12 @@
                 body: JSON.stringify(payload)
             });
 
-            const data = await res.json();
-            if (data.success) {
+            if (res.ok) {
                 showToast('✓ Request requirement berhasil dikirim ke Tim Dataset!', 'success');
             } else {
-                showToast('Gagal mengirim request ke Tim Dataset: ' + (data.error || 'Unknown error'), 'error');
+                const data = await res.json().catch(() => ({}));
+                const errMsg = data.detail || data.error || JSON.stringify(data) || 'Unknown error';
+                showToast('Gagal mengirim request ke Tim Dataset: ' + errMsg, 'error');
             }
         } catch (err) {
             console.error('Error Dataset Request:', err);
