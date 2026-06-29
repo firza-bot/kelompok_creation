@@ -6792,6 +6792,9 @@
     function renderGrid2Mini(subs) {
         const c = document.getElementById('g2-inbox-mini');
         if (!c) return;
+        
+        c.style.display = 'block'; // Tampilkan elemen ini
+
         if (!subs || subs.length === 0) {
             c.innerHTML = '<div class="pg-queue-empty"><span>📭</span><p>Tidak ada data masuk</p></div>';
             updateG2SendBtnMode();
