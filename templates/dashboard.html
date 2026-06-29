@@ -4068,9 +4068,9 @@
                         <div class="g2-form-group">
                             <label class="g2-form-label">Urgensi</label>
                             <select class="g2-form-select" id="g2-form-urgency">
-                                <option value="high">High Priority</option>
-                                <option value="medium" selected>Medium Priority</option>
-                                <option value="low">Low Priority</option>
+                                <option value="HIGH">High Priority</option>
+                                <option value="MEDIUM" selected>Medium Priority</option>
+                                <option value="LOW">Low Priority</option>
                             </select>
                         </div>
                         <!-- New Fields Added -->
@@ -4255,9 +4255,9 @@
                         <textarea class="ig-textarea" id="note-textarea" placeholder="Tulis catatan maintenance di sini..." rows="3"></textarea>
                         <div class="ig-form-row">
                             <select class="ig-select" id="note-priority">
-                                <option value="high">🔴 High Priority</option>
-                                <option value="medium" selected>🟡 Medium Priority</option>
-                                <option value="low">🟢 Low Priority</option>
+                                <option value="HIGH">🔴 High Priority</option>
+                                <option value="MEDIUM" selected>🟡 Medium Priority</option>
+                                <option value="LOW">🟢 Low Priority</option>
                             </select>
                             <div style="display:flex;gap:8px;margin-left:auto;">
                                 <button class="pg-btn-secondary" onclick="cancelNote()" style="padding:8px 14px;font-size:0.8rem;">Batal</button>
@@ -6592,7 +6592,7 @@
         const judul = document.getElementById('g2-form-title')?.value.trim() || 'Data Manual (Dummy)';
         const deskripsi = document.getElementById('g2-form-desc')?.value.trim() || '';
         const kontak = document.getElementById('g2-form-contact')?.value.trim() || 'user@local';
-        const urgensi = document.getElementById('g2-form-urgency')?.value || 'medium';
+        const urgensi = document.getElementById('g2-form-urgency')?.value || 'MEDIUM';
         const minRowVal = document.getElementById('g2-form-minrow')?.value.trim() || '';
         const reqColsVal = document.getElementById('g2-form-reqcols')?.value.trim() || '';
 
@@ -6721,7 +6721,7 @@
         const judul   = inputs[0]?.value.trim() || g2SelectedFile.name;
         const deskripsi = inputs[1]?.value.trim() || '';
         const kontak  = inputs[2]?.value.trim() || '';
-        const urgensi = inputs[3]?.value || 'medium';
+        const urgensi = inputs[3]?.value || 'MEDIUM';
         const formData = new FormData();
         formData.append('source_file', g2SelectedFile);
         formData.append('title', judul);
@@ -7667,7 +7667,7 @@
                 }
             });
             const data = await res.json();
-            if (data.success) {
+            if (res.ok) {
                 showToast(`✓ Tahap ${stage} berhasil dijalankan!`, 'success');
                 await loadPipelineData();
                 selectGrid2Stage(stage);
