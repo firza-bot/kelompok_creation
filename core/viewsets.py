@@ -380,6 +380,54 @@ class IntelligenceSubmissionViewSet(viewsets.ModelViewSet):
 
         return qs
 
+    def perform_update(self, serializer):
+        old_status = self.get_object().status
+        instance = serializer.save()
+        if old_status != 'sent' and instance.status == 'sent':
+            self.send_to_implementation(instance)
+
+    def send_to_implementation(self, submission):
+        import requests
+        import os
+        from django.conf import settings
+        
+        # Endpoint Implementation API (menggunakan docker internal DNS)
+        url = "http://implementation_web:8000/api/datasets/"
+        
+        if not submission.source_file:
+            print("No source file attached to submission, cannot send to implementation.")
+            return
+            
+        file_path = submission.source_file.path
+        if not os.path.exists(file_path):
+            print(f"File {file_path} not found.")
+            return
+            
+        try:
+            with open(file_path, 'rb') as f:
+                # Provide standard metadata expected by Implementation DatasetViewSet
+                data = {
+                    'name': submission.title or 'Unknown Dataset',
+                    'file_name': submission.file_name or os.path.basename(file_path),
+                    'file_type': submission.detected_data_type or 'csv',
+                    'activity': 'todo',
+                    'version': '1.0',
+                    'description': submission.description or f'Sent from Creation - {submission.title}',
+                    'user_email': submission.sender_email or 'creation@internal.local',
+                    'source_type': 'api',
+                }
+                
+                # 'pdf_file' is the field name on implementation app, though it can accept any file type
+                files = {'pdf_file': (os.path.basename(file_path), f, 'application/octet-stream')}
+                
+                res = requests.post(url, data=data, files=files, timeout=10)
+                if res.status_code >= 400:
+                    print(f"Implementation API error {res.status_code}: {res.text}")
+                else:
+                    print(f"Successfully sent {submission.title} to Implementation.")
+        except Exception as e:
+            print("Failed to send submission to implementation:", e)
+
     @action(detail=True, methods=['post'])
     def run_stage(self, request, pk=None):
         """POST /api/v2/submissions/{id}/run_stage/ → Eksekusi skrip ML untuk tahap saat ini"""
