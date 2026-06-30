@@ -389,44 +389,213 @@ class IntelligenceSubmissionViewSet(viewsets.ModelViewSet):
     def send_to_implementation(self, submission):
         import requests
         import os
+        import subprocess
+        import tempfile
         from django.conf import settings
-        
-        # Endpoint Implementation API (menggunakan docker internal DNS)
-        url = "http://implementation_web:8000/api/datasets/"
-        
+        from datetime import datetime
+
+        # Endpoint Implementation API — target Dataset model (DSO table)
+        url = "http://implementation_web:8000/api-content/datasets/"
+
         if not submission.source_file:
             print("No source file attached to submission, cannot send to implementation.")
             return
-            
+
         file_path = submission.source_file.path
         if not os.path.exists(file_path):
             print(f"File {file_path} not found.")
             return
-            
+
+        # === Generate PDF Report from pipeline_data ===
+        pdf_path = None
         try:
-            with open(file_path, 'rb') as f:
-                # Provide standard metadata expected by Implementation DatasetViewSet
+            pd = submission.pipeline_data or {}
+            # Helper to read stage data with fallback
+            def get_stage(n):
+                return pd.get(f'stage_{n}', pd.get(str(n), {}))
+
+            stage0 = get_stage(0)
+            stage1 = get_stage(1)
+            stage3 = get_stage(3)
+            stage5 = get_stage(5)
+            stage7 = get_stage(7)
+
+            metrics = stage7.get('metrics', {})
+            accuracy = metrics.get('accuracy', stage5.get('refined_metrics', {}).get('accuracy', 0))
+            precision = metrics.get('precision', 0)
+            recall = metrics.get('recall', 0)
+            f1 = metrics.get('f1', 0)
+
+            track = stage0.get('track', 'tabular')
+            task_type = stage0.get('task_type', 'classification')
+            target_col = stage1.get('target_column', stage0.get('suggested_target', 'target'))
+            selected_model = stage3.get('selected_model', 'Random Forest')
+            job_id = stage7.get('job_id', 'N/A')
+
+            # Format accuracy for display
+            acc_display = f"{accuracy:.1f}" if isinstance(accuracy, (int, float)) and accuracy > 1 else f"{accuracy*100:.1f}"
+            prec_display = f"{precision:.3f}" if isinstance(precision, (int, float)) else str(precision)
+            rec_display = f"{recall:.3f}" if isinstance(recall, (int, float)) else str(recall)
+            f1_display = f"{f1:.3f}" if isinstance(f1, (int, float)) else str(f1)
+
+            now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>AutoML Training Report - {submission.title}</title>
+    <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f7fafc; color: #2d3748; margin: 0; padding: 40px; }}
+        .container {{ max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+        .header {{ border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }}
+        .header h1 {{ font-size: 28px; color: #4a5568; margin: 0; }}
+        .header p {{ color: #718096; margin: 5px 0 0 0; }}
+        .section-title {{ font-size: 20px; color: #2b6cb0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px; text-transform: uppercase; font-weight: 600; }}
+        .grid {{ display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px; }}
+        .card {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px 20px; text-align: center; }}
+        .metric {{ font-size: 32px; font-weight: bold; color: #2b6cb0; }}
+        .label {{ font-size: 12px; color: #718096; text-transform: uppercase; letter-spacing: 1px; }}
+        .info-row {{ display: flex; justify-content: space-between; border-bottom: 1px solid #edf2f7; padding: 10px 0; }}
+        .info-row:last-child {{ border: none; }}
+        .info-label {{ font-weight: 600; color: #4a5568; }}
+        .info-value {{ color: #2d3748; }}
+        .badge {{ display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }}
+        .badge-success {{ background: #c6f6d5; color: #22543d; }}
+        .insight-box {{ background: #ebf8ff; border-left: 4px solid #3182ce; padding: 15px 20px; border-radius: 0 6px 6px 0; margin: 15px 0; font-size: 14px; line-height: 1.6; }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+        th {{ text-align: left; background: #edf2f7; padding: 10px; font-size: 12px; text-transform: uppercase; color: #4a5568; border: 1px solid #e2e8f0; }}
+        td {{ padding: 10px; border: 1px solid #e2e8f0; font-size: 13px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AutoML Training Report</h1>
+            <p>Submission: {submission.title} | Sender: {submission.sender_name} | Generated: {now_str}</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="metric">{acc_display}%</div>
+                <div class="label">Accuracy</div>
+            </div>
+            <div class="card">
+                <div class="metric">{prec_display}</div>
+                <div class="label">Precision</div>
+            </div>
+            <div class="card">
+                <div class="metric">{rec_display}</div>
+                <div class="label">Recall</div>
+            </div>
+            <div class="card">
+                <div class="metric">{f1_display}</div>
+                <div class="label">F1 Score</div>
+            </div>
+        </div>
+
+        <div class="section-title">Pipeline Information</div>
+        <div class="info-row"><span class="info-label">Job ID</span><span class="info-value">{job_id}</span></div>
+        <div class="info-row"><span class="info-label">Track</span><span class="info-value">{track}</span></div>
+        <div class="info-row"><span class="info-label">Task Type</span><span class="info-value">{task_type}</span></div>
+        <div class="info-row"><span class="info-label">Target Column</span><span class="info-value">{target_col}</span></div>
+        <div class="info-row"><span class="info-label">Selected Model</span><span class="info-value">{selected_model}</span></div>
+        <div class="info-row"><span class="info-label">Data Type</span><span class="info-value">{submission.detected_data_type or 'tabular'}</span></div>
+        <div class="info-row"><span class="info-label">Status</span><span class="info-value"><span class="badge badge-success">Completed</span></span></div>
+
+        <div class="section-title">Submission Details</div>
+        <table>
+            <tr><th>Field</th><th>Value</th></tr>
+            <tr><td>Title</td><td>{submission.title}</td></tr>
+            <tr><td>Sender</td><td>{submission.sender_name} ({submission.sender_team})</td></tr>
+            <tr><td>Email</td><td>{submission.sender_email or 'N/A'}</td></tr>
+            <tr><td>File</td><td>{submission.file_name or os.path.basename(file_path)}</td></tr>
+            <tr><td>File Size</td><td>{submission.file_size} bytes</td></tr>
+            <tr><td>Received</td><td>{submission.received_at}</td></tr>
+            <tr><td>Completed</td><td>{submission.completed_at or now_str}</td></tr>
+        </table>
+
+        <div class="section-title">AI Insight</div>
+        <div class="insight-box">
+            Model <strong>{selected_model}</strong> berhasil dilatih pada dataset dengan tipe <strong>{track}</strong>
+            untuk task <strong>{task_type}</strong>. Akurasi akhir mencapai <strong>{acc_display}%</strong>
+            dengan precision {prec_display}, recall {rec_display}, dan F1-score {f1_display}.
+            Model ini siap untuk diintegrasikan ke sistem produksi.
+        </div>
+    </div>
+</body>
+</html>"""
+
+            # Write HTML to temp file
+            html_fd, html_path = tempfile.mkstemp(suffix='.html', prefix='report_')
+            pdf_fd, pdf_path = tempfile.mkstemp(suffix='.pdf', prefix='report_')
+            os.close(html_fd)
+            os.close(pdf_fd)
+
+            with open(html_path, 'w', encoding='utf-8') as hf:
+                hf.write(html_content)
+
+            # Convert HTML to PDF using wkhtmltopdf
+            result = subprocess.run(
+                ['wkhtmltopdf', '--quiet', '--no-stop-slow-scripts',
+                 '--disable-smart-shrinking', '--page-size', 'A4',
+                 '--margin-top', '10mm', '--margin-bottom', '10mm',
+                 '--margin-left', '10mm', '--margin-right', '10mm',
+                 html_path, pdf_path],
+                capture_output=True, text=True, timeout=30
+            )
+
+            if result.returncode != 0:
+                print(f"wkhtmltopdf error: {result.stderr}")
+                # Fallback: send original file if PDF generation fails
+                pdf_path = None
+
+            # Clean up HTML temp file
+            if os.path.exists(html_path):
+                os.unlink(html_path)
+
+        except Exception as e:
+            print(f"PDF generation warning: {e}. Falling back to source file.")
+            pdf_path = None
+
+        # === Send to Implementation API ===
+        try:
+            # Determine which file to send
+            send_path = pdf_path if pdf_path and os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0 else file_path
+            send_name = f"{submission.title or 'report'}_training_report.pdf" if send_path == pdf_path else os.path.basename(file_path)
+            content_type = 'application/pdf' if send_path == pdf_path else 'application/octet-stream'
+
+            with open(send_path, 'rb') as f:
                 data = {
-                    'name': submission.title or 'Unknown Dataset',
-                    'file_name': submission.file_name or os.path.basename(file_path),
-                    'file_type': submission.detected_data_type or 'csv',
-                    'activity': 'todo',
+                    'name': submission.title or submission.sender_name or 'Unknown',
+                    'file_name': send_name,
+                    'file_type': submission.detected_data_type or 'tabular',
+                    'activity': 'in-progress',
                     'version': '1.0',
-                    'description': submission.description or f'Sent from Creation - {submission.title}',
-                    'user_email': submission.sender_email or 'creation@internal.local',
+                    'description': submission.description or submission.title or '',
+                    'notes': f'Training Report - Accuracy: {accuracy}, Model: {selected_model}' if pdf_path else '',
+                    'quality_score': float(accuracy) if isinstance(accuracy, (int, float)) else 0.0,
                     'source_type': 'api',
+                    'user_email': submission.sender_email or 'ana@gmail.com',
                 }
-                
-                # 'pdf_file' is the field name on implementation app, though it can accept any file type
-                files = {'pdf_file': (os.path.basename(file_path), f, 'application/octet-stream')}
-                
-                res = requests.post(url, data=data, files=files, timeout=10)
+
+                files = {'pdf_file': (send_name, f, content_type)}
+
+                headers = {'Host': '72.61.215.222'}
+                res = requests.post(url, data=data, files=files, headers=headers, timeout=30)
                 if res.status_code >= 400:
                     print(f"Implementation API error {res.status_code}: {res.text}")
                 else:
-                    print(f"Successfully sent {submission.title} to Implementation.")
+                    print(f"Successfully sent PDF report for '{submission.title}' to Implementation.")
         except Exception as e:
             print("Failed to send submission to implementation:", e)
+        finally:
+            # Clean up PDF temp file
+            if pdf_path and os.path.exists(pdf_path):
+                try:
+                    os.unlink(pdf_path)
+                except OSError:
+                    pass
 
     @action(detail=True, methods=['post'])
     def run_stage(self, request, pk=None):
